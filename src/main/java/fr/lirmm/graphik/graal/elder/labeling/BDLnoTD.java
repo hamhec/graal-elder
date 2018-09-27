@@ -22,23 +22,16 @@ import fr.lirmm.graphik.graal.elder.preference.SimplePreferenceFunction;
  * @author hamhec
  *
  */
-/**
- * @author hamhec
- *
- */
-public class BDL extends LabelingFunction {
+public class BDLnoTD extends AbstractDefeasibleLogicLabelingFunction {
 	
-	private DefeasibleKnowledgeBase kb;
-	private PreferenceFunction preferenceFunction;
 	
-	public BDL(DefeasibleKnowledgeBase kb) {
-		this.kb = kb;
-		this.preferenceFunction = new SimplePreferenceFunction(this.kb);
+	
+	public BDLnoTD(DefeasibleKnowledgeBase kb) {
+		super(kb);
 	}
 	
-	public BDL(DefeasibleKnowledgeBase kb, PreferenceFunction pf) {
-		this(kb);
-		this.preferenceFunction = pf;
+	public BDLnoTD(DefeasibleKnowledgeBase kb, PreferenceFunction pf) {
+		super(kb,pf);
 	}
 	
 	public String label(RuleApplication ruleApplication) {
@@ -64,17 +57,17 @@ public class BDL extends LabelingFunction {
 			}
 			
 			// do not consider non in attacks
-			if(!this.isStrictIn(attack.getLabel()) && !this.isDefeasibleIn(attack.getLabel()) ) continue;
+			if(!this.isStrictIn(attack.getLabel()) && !isDefeasibleIn(attack.getLabel()) ) continue;
 			
 			
-			if(this.isStrictIn(attack.getLabel())) { // Attacked by a Strict In
+			if(isStrictIn(attack.getLabel())) { // Attacked by a Strict In
 				ruleApplication.setLabel(Labels.STRICT_OUT); // STRICT_OUT
 				return ruleApplication.getLabel();
 			} else { // attacked by defeasible In 
 				Status prefStatus = this.preferenceFunction.preferenceStatus(ruleApplication, attack);
 				
 				if(prefStatus == Status.INFERIOR) { // This attacks kills the rule application
-					if(this.isDefeasibleIn(attack.getLabel())) {
+					if(isDefeasibleIn(attack.getLabel())) {
 						ruleApplication.setLabel(Labels.DEFEASIBLE_OUT);
 						return ruleApplication.getLabel();
 					}
@@ -107,19 +100,21 @@ public class BDL extends LabelingFunction {
 			return premise.getLabel(); // No need to check attacks
 		}
 		
+		
+		/* The idea of not allowing team defeat is that every support should be able to defend itself from all attacks. */
 		for(SGEdge support: supports) { // Check the label of each support edge
 			// If the support has no label, then compute it.
 			if(support.getLabel() == null) this.label(support);
 			
 			
-			if(this.isStrictIn(support.getLabel())) { 
+			if(isStrictIn(support.getLabel())) { 
 				// If the support is STRICT IN then label the assumption STRICT_IN.
 				premise.setLabel(Labels.STRICT_IN);
 				return premise.getLabel(); // there is no need to check the rest.
-			} else if(this.isDefeasibleIn(support.getLabel()) || this.isAmbiguous(support.getLabel())) { 
-				// If the support is not OUT then add it
+			} else if(isDefeasibleIn(support.getLabel()) || this.isAmbiguous(support.getLabel())) { 
+				// If the support is defeasible In or ambiguous then add it
 				survivingSupports.add(support);
-			} // TODO: continue here
+			}
 		}
 		
 		// Check Attack edges
@@ -129,9 +124,9 @@ public class BDL extends LabelingFunction {
 			if(attack.getLabel() == null) this.label(attack);
 			
 			// if this attack is not a strict in or a defeasible in then do not consider it
-			if(!attack.getLabel().equals(Labels.AMBIGUOUS)) continue;
+			if(!isStrictIn(attack.getLabel()) && !isDefeasibleIn(attack.getLabel())) continue;
 			
-			if(attack.getLabel().equals(Labels.STRICT_IN)) { // Attacked by a Strict In
+			if(isStrictIn(attack.getLabel())) { // Attacked by a Strict In
 				premise.setLabel(Labels.STRICT_OUT); // STRICT_OUT
 				return premise.getLabel(); // No need to check other attacks
 			} else { // DefeasibleIN support vs defeasibleIn attack
@@ -143,114 +138,101 @@ public class BDL extends LabelingFunction {
 					
 					Status pref = this.preferenceFunction.preferenceStatus(survivingSupport, attack);
 					
-					if(pref == Status.INFERIOR && attack.getLabel().equals(Labels.DEFEASIBLE_IN)) { 
+					if(pref == Status.INFERIOR) { 
 						itSurviv.remove();// This attack kills this edge
-					} else if(pref.equals(Preference.EQUAL)) {
-						if(attack.getLabel().equals(Labels.DEFEASIBLE_IN)) {
-							survivingSupport.isCountered(true); // This support has been countered.
-						}
-					} else {
-						// Should remove the attack if you want team support, pay attention to the order
+					} else if(pref == Status.EQUAL) {
+						survivingSupport.isCountered(true); // This support has been countered.
 					}
 				}
 				
 				if(survivingSupports.isEmpty()) { // All supports have been killed.
-					premise.setLabel(Labels.OUT); // DEFEASIBLE_OUT
+					premise.setLabel(Labels.DEFEASIBLE_OUT); // DEFEASIBLE_OUT
 					return premise.getLabel(); // No need to check other attacks
 				}
 			}
 		}
 		
-		boolean ambiguous = false;
 		// If all supports have been countered then it's AMBIGUOUS
 		for(SGEdge support: survivingSupports) {
-			if(support.getLabel().equals(Labels.DEFEASIBLE_IN)) {
-				if(support.isCountered()) {
-					ambiguous = true;
-				} else { // A defeasible support is IN and is not countred, so IN.
+			if(isDefeasibleIn(support.getLabel())) {
+				if(!support.isCountered()) {
+					// A defeasible support is IN and is not countred, so Defeasible IN.
 					premise.setLabel(Labels.DEFEASIBLE_IN);
 					return premise.getLabel();
 				}
-			} else if(support.getLabel().equals(Labels.AMBIGUOUS)) {
-				ambiguous = true;
 			}
 		}
 		
-		if(ambiguous) {
-			premise.setLabel(Labels.AMBIGUOUS);
-		} else {
-			premise.setLabel(Labels.OUT);
-		}
-
+		// This premise has no surviving DEFEASIBLE_IN that are not countered
+		// Therefore, it either has a ambiguous support or a countered Defeasible In support
+		premise.setLabel(Labels.AMBIGUOUS);
 		return premise.getLabel();
 	}
 
+	
+	
+	
 	public String label(Statement statement) {
 		
 		if(statement.getLabel() != null) return statement.getLabel();
-		// We assume it's out
-		String statementLabel = Labels.OUT;
 		
-		// Find the Label for the rule application
-		if(!statement.isClaimStatement()) { // If not a claim satement then take a look at it's rule application
-			this.label(statement.getRuleApplication());
-			
-			if(statement.getRuleApplication().getLabel().equals(Labels.OUT)) { // if the rule application is out then all is out
-				statementLabel = Labels.OUT;
-				statement.setLabel(statementLabel);
-				return statement.getLabel();
-			} 
-		}
-		boolean defeasible = false;
+		boolean defeasibleOut = false;
+		boolean defeasibleIn = false;
+		boolean strictIn = false;
 		boolean ambiguous = false;
+		boolean unsupported = false;
 		// Find the label for the premises
 		for(Premise prem: statement.getPremises()) {
 			this.label(prem);
-			if(prem.getLabel().equals(Labels.AMBIGUOUS)) {
-				ambiguous = true;
-			} else if(prem.getLabel().equals(Labels.OUT)) {
-				statementLabel = Labels.OUT; // need distinction between strict out and defeasible out
-				statement.setLabel(statementLabel); 
+			if(isStrictOut(prem.getLabel())) { // If a premise is strictOut then the statement is strict Out
+				statement.setLabel(Labels.STRICT_OUT);
 				return statement.getLabel();
-			} else if(prem.getLabel().equals(Labels.DEFEASIBLE_IN)) {
-				defeasible = true;
+			} else if(isDefeasibleOut(prem.getLabel())) {
+				defeasibleOut = true;
+			} else if(isAmbiguous(prem.getLabel())) {
+				ambiguous = true;
+			} else if(isStrictIn(prem.getLabel())) {
+				strictIn = true;
+			} else if(isDefeasibleIn(prem.getLabel())) {
+				defeasibleIn = true;
 			}
 		}
 		
-		if(statement.isClaimStatement()) { // if it's a statement then only check Premise
-			if(ambiguous) {
-				statementLabel = Labels.AMBIGUOUS;
-			} else if(defeasible){
-				statementLabel = Labels.DEFEASIBLE_IN;
-			} else {
-				statementLabel = Labels.STRICT_IN;
-			}
-		} else { // Not a claim statement
-			if(ambiguous || statement.getRuleApplication().getLabel().equals(Labels.AMBIGUOUS)) {
-				statementLabel = Labels.AMBIGUOUS;
-			} else if(defeasible || statement.getRuleApplication().getLabel().equals(Labels.DEFEASIBLE_IN)) {
-				statementLabel = Labels.DEFEASIBLE_IN;
-			} else {
-				statementLabel = Labels.STRICT_IN;
-			}
+		// If a premise is Defeasible Out then the statement is defeasible Out regardless of the label of the rule
+		if(defeasibleOut) {
+			statement.setLabel(Labels.DEFEASIBLE_OUT);
+			return statement.getLabel();
 		}
 		
-		statement.setLabel(statementLabel);
+		// Find the Label for the rule application
+		boolean ruleIsDefeasibleIn = false;
+		boolean ruleIsAmbiguous = false;
+		
+		if(!statement.isClaimStatement()) { // If not a claim satement then take a look at it's rule application
+			this.label(statement.getRuleApplication());
+			
+			if(isDefeasibleOut(statement.getRuleApplication().getLabel())) { // if the rule application is out then all is out
+				statement.setLabel(Labels.DEFEASIBLE_OUT);
+				return statement.getLabel();
+			} else if(isAmbiguous(statement.getRuleApplication().getLabel())) {
+				ruleIsAmbiguous = true;
+			} else {
+				ruleIsDefeasibleIn = true;
+			}
+		} 
+		
+		if(ambiguous || ruleIsAmbiguous) {
+			statement.setLabel(Labels.AMBIGUOUS);
+		} else if(defeasibleIn || ruleIsDefeasibleIn){
+			statement.setLabel(Labels.DEFEASIBLE_IN);
+		} else {
+			statement.setLabel(Labels.STRICT_IN);
+		}
 		
 		return statement.getLabel();
 	}
 
-	public String label(SGEdge edge) {
-		if(edge.getLabel() != null) return edge.getLabel();
-		Statement source = edge.getSource();
-		if(source.getLabel() == null) this.label(source);
-		
-		edge.setLabel(source.getLabel());
-		
-		return edge.getLabel();
-	}
 	
-	public PreferenceFunction getPreferenceFunction() {
-		return this.preferenceFunction;
-	}
+	
+	
 }

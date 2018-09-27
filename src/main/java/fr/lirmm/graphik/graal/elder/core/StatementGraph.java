@@ -65,7 +65,7 @@ public class StatementGraph {
 	 * @param kb The defeasible Knowledge Base
 	 */
 	public StatementGraph(DefeasibleKnowledgeBase kb) {
-		this(kb, new BDL(kb));
+		this(kb, new BDLnoTD(kb));
 	}
 	
 	// ------------------------------------------------------------------------
