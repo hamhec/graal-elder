@@ -16,10 +16,16 @@ import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplier;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
 import fr.lirmm.graphik.graal.core.DefaultConjunctiveQuery;
-import fr.lirmm.graphik.graal.core.DefaultRule;
-import fr.lirmm.graphik.graal.core.atomset.graph.DefaultInMemoryGraphStore;
+import fr.lirmm.graphik.graal.core.EmptySubstitution;
+import fr.lirmm.graphik.graal.core.atomset.LinkedListAtomSet;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
+import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
 import fr.lirmm.graphik.graal.defeasible.core.io.DlgpDefeasibleParser;
+import fr.lirmm.graphik.graal.defeasible.core.rules.StrictRule;
+import fr.lirmm.graphik.graal.elder.labeling.LabelingFunction;
+import fr.lirmm.graphik.graal.elder.labeling.Labels;
+import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithTD;
+import fr.lirmm.graphik.graal.elder.reasoning.SGRuleApplicationHandler;
 import fr.lirmm.graphik.graal.homomorphism.SmartHomomorphism;
 import fr.lirmm.graphik.util.stream.CloseableIterator;
 import fr.lirmm.graphik.util.stream.CloseableIteratorWithoutException;
@@ -42,20 +48,18 @@ public class StatementGraph {
 	// CONSTRUCTORS
 	// ------------------------------------------------------------------------
 	/**
-	 * Creates an EDG given a KB and a labelingFunction
+	 * Creates an SG given a KB and a labelingFunction
 	 * @param kb The defeasible Knowledge Base
 	 * @param labelingFunction LabelingFunction
 	 */
 	public StatementGraph(DefeasibleKnowledgeBase kb, LabelingFunction labelingFunction) {
 		this.labelingFunction = labelingFunction;
 		this.kb = kb;
-		this.statements = new HashMap<Statement, Statement>();
+		this.statements = new HashMap<Statement,Statement>();
 		this.premises = new HashMap<Atom, Premise>();
 		this.statementsForAtom = new HashMap<Atom, List<Statement>>();
 		
 		this.conflictingAtoms = new HashMap<Atom, List<Atom>>();
-		
-		this.statements = new HashMap<Statement, Statement>();
 		this.statementsOfQueries = new HashMap<Statement, Statement>();
 		
 		this.createTOPStatement();
@@ -65,7 +69,7 @@ public class StatementGraph {
 	 * @param kb The defeasible Knowledge Base
 	 */
 	public StatementGraph(DefeasibleKnowledgeBase kb) {
-		this(kb, new BDLnoTD(kb));
+		this(kb, new BDLwithTD(kb));
 	}
 	
 	// ------------------------------------------------------------------------
@@ -78,7 +82,7 @@ public class StatementGraph {
 		this.labelingFunction = labelingFunction;
 	}
 	/**
-	 * Return the defeasible knowledge base used to construct this EDG.
+	 * Return the defeasible knowledge base used to construct this SG.
 	 * @return The defeasible Knowledge Base
 	 */
 	public DefeasibleKnowledgeBase getKB() {
@@ -92,7 +96,7 @@ public class StatementGraph {
 		return this.topStatement;
 	}
 	/**
-	 * Returns a collection containing all statements of this EDG
+	 * Returns a collection containing all statements of this SG
 	 * @return List of all statements
 	 */
 	public List<Statement> getAllStatements() {
@@ -107,11 +111,11 @@ public class StatementGraph {
 		return this.premises.values();
 	}
 	/**
-	 * Returns All support edges in this EDG
-	 * @return List of support edges in this EDG
+	 * Returns All support edges in this SG
+	 * @return List of support edges in this SG
 	 */
-	public List<EDGEdge> getSupportEdges() {
-		List<EDGEdge> edges = new LinkedList<EDGEdge>();
+	public List<SGEdge> getSupportEdges() {
+		List<SGEdge> edges = new LinkedList<SGEdge>();
 		Iterator<Statement> itStatements = this.getAllStatements().iterator();
 		while(itStatements.hasNext()) {
 			Statement statement = itStatements.next();
@@ -120,11 +124,11 @@ public class StatementGraph {
 		return edges;
 	}
 	/**
-	 * Returns All attack edges in this EDG
-	 * @return List of all attack edges in this EDG
+	 * Returns All attack edges in this SG
+	 * @return List of all attack edges in this SG
 	 */
-	public List<EDGEdge> getAttackEdges() {
-		List<EDGEdge> edges = new LinkedList<EDGEdge>();
+	public List<SGEdge> getAttackEdges() {
+		List<SGEdge> edges = new LinkedList<SGEdge>();
 		Iterator<Statement> itStatements = this.getAllStatements().iterator();
 		while(itStatements.hasNext()) {
 			Statement statement = itStatements.next();
@@ -155,7 +159,7 @@ public class StatementGraph {
 	 * @param premises Premises
 	 * @return statement
 	 */
-	public Statement getStatement(RuleApplication ruleApplication, List<Premise> premises) {
+	public Statement getOrCreateStatement(RuleApplication ruleApplication, List<Premise> premises) {
 		Statement s1 = new Statement(ruleApplication, premises);
 		Statement statement = this.statements.get(s1);
 		if(null == statement) {
@@ -164,6 +168,19 @@ public class StatementGraph {
 		}
 		return statement;
 	}
+	
+	public Statement getOrCreateStatement(AtomSet body, Atom head, Rule rule, Substitution substitution) throws IteratorException {
+		// Add the head as a Premise if it doesn't already exists
+		this.getOrCreatePremiseOfAtom(head);
+		// Add statement
+		List<Premise> premises = this.getPremisesForAtoms(body);
+		if(premises.isEmpty()) { // body is top statement;
+			premises.add(this.getOrCreatePremiseOfAtom(this.getTOPStatement().getRuleApplication().getGeneratedAtom()));
+		}
+		RuleApplication ruleApplication = new RuleApplication(rule, substitution, head);
+		return this.getOrCreateStatement(ruleApplication, premises);
+	}
+	
 	/**
 	 * Returns a list of statements that supports the atom.
 	 * @param atom Atom
@@ -201,8 +218,10 @@ public class StatementGraph {
 		Statement statement = new Statement(ruleApplication, premises);
 		this.addStatement(statement);
 	}
+	
+
 	/**
-	 * Constructs the EDG by creating the statements and the edges
+	 * Constructs the SG by creating the statements and the edges
 	 * @throws IteratorException Something Went Wrong
 	 * @throws ChaseException Something Went Wrong
 	 * @throws AtomSetException Something Went Wrong
@@ -258,7 +277,7 @@ public class StatementGraph {
 	 */
 	public String groundQuery(String atomsString) throws IteratorException, AtomSetException {
 		CloseableIterator<Atom> itParsedAtoms = DlgpDefeasibleParser.parseAtomSet(atomsString);
-		AtomSet atoms = new DefaultInMemoryGraphStore();
+		AtomSet atoms = new LinkedListAtomSet();
 		
 		while(itParsedAtoms.hasNext()) {
 			atoms.add(itParsedAtoms.next());
@@ -287,11 +306,11 @@ public class StatementGraph {
 		return premise.getLabel();
 	}
 	/**
-	 * Computes the label of an EDGEdge
-	 * @param edge Input EDGEdge
+	 * Computes the label of an SGEdge
+	 * @param edge Input SGEdge
 	 * @return label of the edge
 	 */
-	public String computeLabel(EDGEdge edge) {
+	public String computeLabel(SGEdge edge) {
 		if(edge.getLabel() == null) 
 			this.getLabelingFunction().label(edge);
 		return edge.getLabel();
@@ -357,17 +376,18 @@ public class StatementGraph {
 	 * Creates the Top Statement.
 	 */
 	private void createTOPStatement() {
-		Atom TOPatom = DefeasibleKnowledgeBase.getTOPAtom();
+		Atom TOPatom = LogicalObjectsFactory.instance().getTOPAtom();
 		// Adds the TOP atom to the list of Premises
 		this.getOrCreatePremiseOfAtom(TOPatom);
 
-		InMemoryAtomSet head = new DefaultInMemoryGraphStore();
+		InMemoryAtomSet head = new LinkedListAtomSet();
 		head.add(TOPatom);
-		RuleApplication ruleApplication = new RuleApplication(new DefaultRule("", null, head), null, TOPatom);
+		RuleApplication ruleApplication = new RuleApplication(new StrictRule("", null, head),
+				EmptySubstitution.instance(), TOPatom);
 		
 		this.topStatement = new Statement(ruleApplication, null);
 		this.topStatement.setLabel(Labels.STRICT_IN); // Label Top Statement STRICT IN
-		
+		// Add the top statement to the statement for atom list
 		List<Statement> list = new LinkedList<Statement>();
 		list.add(this.topStatement);
 		this.statementsForAtom.put(TOPatom, list);
@@ -380,7 +400,7 @@ public class StatementGraph {
 		TOPpremise.add(this.getOrCreatePremiseOfAtom(this.getTOPStatement()
 				.getRuleApplication().getGeneratedAtom()));
 		
-		InMemoryAtomSet body = new DefaultInMemoryGraphStore();
+		InMemoryAtomSet body = new LinkedListAtomSet();
 		body.add(this.getTOPStatement().getRuleApplication().getGeneratedAtom());
 		
 		while(itFacts.hasNext()) {
@@ -388,12 +408,12 @@ public class StatementGraph {
 			// Add the atom to the premise list
 			this.getOrCreatePremiseOfAtom(atom);
 			// Create the rule application for this atom
-			InMemoryAtomSet head = new DefaultInMemoryGraphStore();
+			InMemoryAtomSet head = new LinkedListAtomSet();
 			head.add(atom);
 			
-			RuleApplication ruleApplication = new RuleApplication(new DefaultRule("", body, head), null, atom);
+			RuleApplication ruleApplication = new RuleApplication(new StrictRule("", body, head), null, atom);
 			// Create the Statement for this fact
-			this.addStatement(new Statement(ruleApplication, TOPpremise));
+			this.getOrCreateStatement(ruleApplication, TOPpremise);
 		}
 	}
 	
@@ -424,7 +444,7 @@ public class StatementGraph {
 		if(statements != null) {
 			for(Statement s : statements) {
 				if(!s.getRuleApplication().isDefeater()) {
-					EDGEdge edge = new EDGEdge(s, prem, false);
+					SGEdge edge = new SGEdge(s, prem, false);
 					prem.addSupportEdge(edge);
 					s.addOutgoingSupportEdge(edge);
 				}
@@ -454,12 +474,12 @@ public class StatementGraph {
 			
 			// Find Ground Atoms that Map to Negative Constraint
 			CloseableIterator<Substitution> itSubstitutions = SmartHomomorphism.instance()
-					.execute(new DefaultConjunctiveQuery(nc.getBody()), this.kb.getSatruatedFacts());
+					.execute(new DefaultConjunctiveQuery(nc.getBody()), this.kb.getStaturatedFacts());
 			
 			if(!itSubstitutions.hasNext()) { continue; }
 		
-			AtomSet firstAtoms = new DefaultInMemoryGraphStore();		
-			AtomSet secondAtoms = new DefaultInMemoryGraphStore();
+			AtomSet firstAtoms = new LinkedListAtomSet();		
+			AtomSet secondAtoms = new LinkedListAtomSet();
 			
 			while(itSubstitutions.hasNext()) {
 				Substitution sub = itSubstitutions.next();
@@ -490,7 +510,7 @@ public class StatementGraph {
 	}
 	
 	private RuleApplier<Rule, AtomSet> getRuleApplier() {
-		return new EDGRuleApplicationHandler(this).getRuleApplier();
+		return new SGRuleApplicationHandler(this).getRuleApplier();
 	}
 	
 	private void createAttackLinksBetweenPremiseAndStatements(Premise prem, 
@@ -505,14 +525,14 @@ public class StatementGraph {
 		
 		for(Statement s: statementsAgainstPremise) {
 			if(!s.getRuleApplication().isDefeater()) { // If not a defeater then it attacks the premise
-				EDGEdge edge = new EDGEdge(s, prem, true);
+				SGEdge edge = new SGEdge(s, prem, true);
 				prem.addAttackEdge(edge);
 				s.addOutgoingAttackEdge(edge);
 				conflicts.add(s.getRuleApplication().getGeneratedAtom());
 			} else { // It is a defeater, it must attack the rule application
 				if(statementsForPremise == null) continue;
 				for(Statement sForPremise: statementsForPremise) {
-					EDGEdge edge = new EDGEdge(s, sForPremise.getRuleApplication(), true);
+					SGEdge edge = new SGEdge(s, sForPremise.getRuleApplication(), true);
 					sForPremise.getRuleApplication().addAttackEdge(edge);
 					s.addOutgoingAttackEdge(edge);
 				}

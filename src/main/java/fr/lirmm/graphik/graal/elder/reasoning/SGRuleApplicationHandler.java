@@ -1,0 +1,65 @@
+package fr.lirmm.graphik.graal.elder.reasoning;
+
+import fr.lirmm.graphik.graal.api.core.Atom;
+import fr.lirmm.graphik.graal.api.core.AtomSet;
+import fr.lirmm.graphik.graal.api.core.Rule;
+import fr.lirmm.graphik.graal.api.core.Substitution;
+import fr.lirmm.graphik.graal.api.forward_chaining.ChaseHaltingCondition;
+import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplicationHandler;
+import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplier;
+import fr.lirmm.graphik.graal.elder.core.StatementGraph;
+import fr.lirmm.graphik.graal.forward_chaining.halting_condition.FrontierRestrictedChaseHaltingCondition;
+import fr.lirmm.graphik.graal.forward_chaining.halting_condition.HaltingConditionWithHandler;
+import fr.lirmm.graphik.graal.forward_chaining.rule_applier.ExhaustiveRuleApplier;
+import fr.lirmm.graphik.graal.homomorphism.SmartHomomorphism;
+import fr.lirmm.graphik.util.stream.CloseableIterator;
+import fr.lirmm.graphik.util.stream.CloseableIteratorWithoutException;
+import fr.lirmm.graphik.util.stream.IteratorException;
+
+public class SGRuleApplicationHandler implements RuleApplicationHandler{
+	
+	private StatementGraph sg;
+	
+	public SGRuleApplicationHandler(StatementGraph sg) {
+		super();
+		this.sg = sg;
+	}
+	
+	// No pre rule application code is needed
+	public boolean preRuleApplication(Rule rule, Substitution substitution,
+			AtomSet data) {
+		return true;
+	}
+	
+	// After rule application code
+	public CloseableIterator<Atom> postRuleApplication(Rule rule,
+			Substitution substitution, AtomSet data, CloseableIterator<Atom> atomsToAdd) {
+		
+		// atomsToAdd is not reliable as atoms reference could be deleted if they are considered redundant
+		// so we create our own image of those facts
+		CloseableIteratorWithoutException<Atom> itNewFacts = substitution.createImageOf(rule.getHead()).iterator();
+		AtomSet body = substitution.createImageOf(rule.getBody());
+		// Add a rule application (statement) for each generated Atom
+		while(itNewFacts.hasNext()) {
+			try {
+				sg.addStatementForRuleApplication(body, itNewFacts.next(), rule, substitution);
+			} catch (IteratorException e) {
+				e.printStackTrace();
+			} 
+		}
+		return atomsToAdd;
+	}
+	
+	
+	public RuleApplier<Rule, AtomSet> getRuleApplier() {
+		return getRuleApplier(new FrontierRestrictedChaseHaltingCondition());
+	}
+	
+	public RuleApplier<Rule, AtomSet> getRuleApplier(ChaseHaltingCondition chaseCondition) {
+		HaltingConditionWithHandler chaseConditionHandler = new HaltingConditionWithHandler(chaseCondition, this);
+		RuleApplier<Rule, AtomSet> ruleApplier = new ExhaustiveRuleApplier<AtomSet>(SmartHomomorphism.instance(), chaseConditionHandler); 
+		
+		return ruleApplier;
+	}
+	
+}
