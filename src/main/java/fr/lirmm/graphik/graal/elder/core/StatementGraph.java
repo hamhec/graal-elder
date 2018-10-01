@@ -206,7 +206,7 @@ public class StatementGraph {
 	}
 	
 	
-	public void addStatementForRuleApplication(AtomSet body, Atom head, Rule rule, Substitution substitution) throws IteratorException {
+	public Statement addStatementForRuleApplication(AtomSet body, Atom head, Rule rule, Substitution substitution) throws IteratorException {
 		// Add the head as a Premise if it doesn't already exists
 		this.getOrCreatePremiseOfAtom(head);
 		// Add statement
@@ -217,6 +217,7 @@ public class StatementGraph {
 		RuleApplication ruleApplication = new RuleApplication(rule, substitution, head);
 		Statement statement = new Statement(ruleApplication, premises);
 		this.addStatement(statement);
+		return statement;
 	}
 	
 
@@ -478,34 +479,23 @@ public class StatementGraph {
 			
 			if(!itSubstitutions.hasNext()) { continue; }
 		
-			AtomSet firstAtoms = new LinkedListAtomSet();		
-			AtomSet secondAtoms = new LinkedListAtomSet();
-			
 			while(itSubstitutions.hasNext()) {
 				Substitution sub = itSubstitutions.next();
-				firstAtoms.add(sub.createImageOf(firstAtom));
-				secondAtoms.add(sub.createImageOf(secondAtom));
-			}
-			
-			CloseableIterator<Atom> itFirstAtoms = firstAtoms.iterator();
-			while(itFirstAtoms.hasNext()) {
-				Atom atom = itFirstAtoms.next();
-				Premise prem = this.getOrCreatePremiseOfAtom(atom);
-				List<Statement> statementsForAtom = this.getStatementsForAtom(atom);
+				Atom firstAtomImage = sub.createImageOf(firstAtom);
+				Atom secondAtomImage = sub.createImageOf(secondAtom);
 				
-				CloseableIterator<Atom> itSecondAtoms = secondAtoms.iterator();
-				while(itSecondAtoms.hasNext()) {
-					Atom atom2 = itSecondAtoms.next();
-					Premise prem2 = this.getOrCreatePremiseOfAtom(atom2);
-					List<Statement> statementsForAtom2 = this.getStatementsForAtom(atom2);
+				Premise prem = this.getOrCreatePremiseOfAtom(firstAtomImage);
+				List<Statement> statementsForAtom = this.getStatementsForAtom(prem.getAtom());
+				
+				Premise prem2 = this.getOrCreatePremiseOfAtom(secondAtomImage);
+				List<Statement> statementsForAtom2 = this.getStatementsForAtom(prem2.getAtom());
 					
-					// Create Attack Links against the first Atom
-					this.createAttackLinksBetweenPremiseAndStatements(prem, statementsForAtom2, statementsForAtom);
-					// Create Attack Links against the second Atom
-					this.createAttackLinksBetweenPremiseAndStatements(prem2, statementsForAtom, statementsForAtom2);
-				}
-				
+				// Create Attack Links against the first Atom
+				this.createAttackLinksBetweenPremiseAndStatements(prem, statementsForAtom2, statementsForAtom);
+				// Create Attack Links against the second Atom
+				this.createAttackLinksBetweenPremiseAndStatements(prem2, statementsForAtom, statementsForAtom2);
 			}
+				
 		}
 	}
 	

@@ -62,6 +62,7 @@ public class RuleApplication extends AbstractAssumption {
         int result = 1;
         result = prime * result + ((this.getRule() == null) ? 0 : this.getRule().hashCode());
         result = prime * result + ((this.getSubstitution() == null) ? 0 : this.getSubstitution().hashCode());
+        result = prime * result + ((this.getGeneratedAtom() == null) ? 0 : this.getGeneratedAtom().hashCode());
         
         if(this.isDefeasible()) {
         	result = prime * result + 1;

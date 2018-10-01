@@ -213,7 +213,7 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 				return statement.getLabel();
 			} else if(DefeasibleLogicLabelingHelper.isAmbiguous(statement.getRuleApplication().getLabel())) {
 				ruleIsAmbiguous = true;
-			} else {
+			} else if(DefeasibleLogicLabelingHelper.isDefeasibleIn(statement.getRuleApplication().getLabel())) {
 				ruleIsDefeasibleIn = true;
 			}
 		} 
