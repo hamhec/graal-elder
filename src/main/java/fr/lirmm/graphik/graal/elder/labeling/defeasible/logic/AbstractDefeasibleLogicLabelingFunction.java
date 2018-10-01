@@ -21,20 +21,21 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 	protected PreferenceFunction preferenceFunction;
 	
 	
-	public AbstractDefeasibleLogicLabelingFunction(DefeasibleKnowledgeBase kb) {
+	public AbstractDefeasibleLogicLabelingFunction() {
+	}
+	
+	public AbstractDefeasibleLogicLabelingFunction(PreferenceFunction pf) {
+		this.preferenceFunction = pf;
+	}
+	
+	public void setKnowledgeBase(DefeasibleKnowledgeBase kb) {
 		this.kb = kb;
 		this.preferenceFunction = new SimplePreferenceFunction(this.kb);
 	}
-	
-	public AbstractDefeasibleLogicLabelingFunction(DefeasibleKnowledgeBase kb, PreferenceFunction pf) {
-		this(kb);
-		this.preferenceFunction = pf;
-	}
-
 
 	/**
 	 * Indicates if this attack should be considered for the semantics
-	 * @param attack
+	 * @param attack an SGEdge representing the attack
 	 * @return true if the label of this attack has an impact on the semantics
 	 */
 	public abstract boolean shouldAttackBeConsidered(SGEdge attack);

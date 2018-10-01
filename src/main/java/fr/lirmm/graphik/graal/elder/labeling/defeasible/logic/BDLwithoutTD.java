@@ -24,12 +24,12 @@ import fr.lirmm.graphik.graal.elder.preference.SimplePreferenceFunction;
  */
 public class BDLwithoutTD extends AbstractDefeasibleLogicLabelingFunction {
 	
-	public BDLwithoutTD(DefeasibleKnowledgeBase kb) {
-		super(kb);
+	public BDLwithoutTD() {
+		super();
 	}
 	
-	public BDLwithoutTD(DefeasibleKnowledgeBase kb, PreferenceFunction pf) {
-		super(kb,pf);
+	public BDLwithoutTD(PreferenceFunction pf) {
+		super(pf);
 	}
 	
 	public boolean shouldAttackBeConsidered(SGEdge attack) {

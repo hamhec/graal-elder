@@ -55,6 +55,8 @@ public class StatementGraph {
 	public StatementGraph(DefeasibleKnowledgeBase kb, LabelingFunction labelingFunction) {
 		this.labelingFunction = labelingFunction;
 		this.kb = kb;
+		this.labelingFunction.setKnowledgeBase(this.kb);
+		
 		this.statements = new HashMap<Statement,Statement>();
 		this.premises = new HashMap<Atom, Premise>();
 		this.statementsForAtom = new HashMap<Atom, List<Statement>>();
@@ -69,7 +71,7 @@ public class StatementGraph {
 	 * @param kb The defeasible Knowledge Base
 	 */
 	public StatementGraph(DefeasibleKnowledgeBase kb) {
-		this(kb, new BDLwithTD(kb));
+		this(kb, new BDLwithTD());
 	}
 	
 	// ------------------------------------------------------------------------

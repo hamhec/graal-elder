@@ -8,13 +8,10 @@ public class SGEdge {
 	
 	private String label;
 	
-	private boolean isCountered; // if the support or attack edge is countered by another edge
-	
 	public SGEdge(Statement source, Assumption target, boolean isAttack) {
 		this.source = source;
 		this.target = target;
 		this.isAttack = isAttack;
-		this.isCountered = false;
 	}
 	
 	public Statement getSource() {
@@ -35,14 +32,6 @@ public class SGEdge {
 	
 	public void setLabel(String label) {
 		this.label = label;
-	}
-	
-	public boolean isCountered() {
-		return this.isCountered;
-	}
-	
-	public void isCountered(boolean isCountered) {
-		this.isCountered = isCountered;
 	}
 	
 	public boolean targetIsRuleApplication() {
@@ -69,7 +58,7 @@ public class SGEdge {
 	/**
      * Verifies if two SGEdges are equivalent or not.
      * @param obj the object to test
-     * @retrun true if the objects are equal, false otherwise.
+     * @return true if the objects are equal, false otherwise.
      */
     public boolean equals(Object obj) {
         if (this == obj) { return true; }

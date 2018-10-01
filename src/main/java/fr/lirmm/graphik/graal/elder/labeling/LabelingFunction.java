@@ -1,5 +1,6 @@
 package fr.lirmm.graphik.graal.elder.labeling;
 
+import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.elder.core.Premise;
 import fr.lirmm.graphik.graal.elder.core.RuleApplication;
 import fr.lirmm.graphik.graal.elder.core.SGEdge;
@@ -42,4 +43,5 @@ public abstract class LabelingFunction {
 	 */
 	public abstract PreferenceFunction getPreferenceFunction();
 	
+	public abstract void setKnowledgeBase(DefeasibleKnowledgeBase kb);
 }

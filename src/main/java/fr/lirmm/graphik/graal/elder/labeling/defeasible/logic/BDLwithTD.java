@@ -26,12 +26,12 @@ public class BDLwithTD extends AbstractDefeasibleLogicLabelingFunction {
 	
 	
 	
-	public BDLwithTD(DefeasibleKnowledgeBase kb) {
-		super(kb);
+	public BDLwithTD() {
+		super();
 	}
 	
-	public BDLwithTD(DefeasibleKnowledgeBase kb, PreferenceFunction pf) {
-		super(kb,pf);
+	public BDLwithTD(PreferenceFunction pf) {
+		super(pf);
 	}
 	
 	public boolean shouldAttackBeConsidered(SGEdge attack) {

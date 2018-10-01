@@ -13,7 +13,7 @@ import fr.lirmm.graphik.graal.elder.preference.PreferenceFunction;
 public class DefeasibleLogicLabelingHelper {
 	/**
 	 * Indicates if this attack should be considered as it is ambiguity blocking
-	 * @param attack
+	 * @param attack the SGEdge attack
 	 * @return true if the label of this attack has an impact on the semantics
 	 */
 	public static boolean ambiguityBlocking(SGEdge attack) {
@@ -22,7 +22,7 @@ public class DefeasibleLogicLabelingHelper {
 	
 	/**
 	 * Indicates if this attack should be considered as it is ambiguity propagating
-	 * @param attack
+	 * @param attack and SGEdge representing the attack
 	 * @return true if the label of this attack has an impact on the semantics
 	 */
 	public static boolean ambiguityPropagating(SGEdge attack) {
@@ -34,6 +34,7 @@ public class DefeasibleLogicLabelingHelper {
 	 * @param premise a premise to be labeled
 	 * @param survivingSupports the surviving supports for this premise
 	 * @param survivingAttacks the surviving attacks for this premise
+	 * @param preferenceFunction the preference function
 	 * @return the label of the premise
 	 */
 	public static String withTeamDefeat(Premise premise, 
@@ -122,6 +123,7 @@ public class DefeasibleLogicLabelingHelper {
 	 * @param premise a premise to be labeled
 	 * @param survivingSupports the surviving supports for this premise
 	 * @param survivingAttacks the surviving attacks for this premise
+	 * @param preferenceFunction the preference function
 	 * @return the label of the premise
 	 */
 	public static String withoutTeamDefeat(Premise premise, 

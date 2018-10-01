@@ -26,12 +26,12 @@ public class PDLwithTD extends AbstractDefeasibleLogicLabelingFunction {
 	
 	
 	
-	public PDLwithTD(DefeasibleKnowledgeBase kb) {
-		super(kb);
+	public PDLwithTD() {
+		super();
 	}
 	
-	public PDLwithTD(DefeasibleKnowledgeBase kb, PreferenceFunction pf) {
-		super(kb,pf);
+	public PDLwithTD(PreferenceFunction pf) {
+		super(pf);
 	}
 	
 	public boolean shouldAttackBeConsidered(SGEdge attack) {
