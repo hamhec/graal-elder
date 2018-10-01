@@ -3,7 +3,7 @@
 
   <groupId>fr.lirmm.graphik</groupId>
   <artifactId>graal-elder</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   
   <name>Existential Logic for Defeasible Reasoning</name>
