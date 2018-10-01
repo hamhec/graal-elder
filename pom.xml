@@ -14,7 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <graal.defeasible.core.version>0.0.2-SNAPSHOT</graal.defeasible.core.version>
+    <graal.defeasible.core.version>0.0.2</graal.defeasible.core.version>
     <jdk.version>1.8</jdk.version>
   </properties>
 	
