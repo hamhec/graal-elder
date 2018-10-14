@@ -1,6 +1,7 @@
 package fr.lirmm.graphik.graal.elder.core;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class AbstractAssumption implements Assumption {
@@ -42,5 +43,12 @@ public abstract class AbstractAssumption implements Assumption {
 			return;
 		}
 		this.supportEdges.add(edge);
+	}
+	
+	public List<SGEdge> getIncomingEdges() {
+		List<SGEdge> edges = new LinkedList<SGEdge>();
+		edges.addAll(this.getAttackEdges());
+		edges.addAll(this.getSupportEdges());
+		return edges;
 	}
 }

@@ -1,30 +1,25 @@
 package fr.lirmm.graphik.graal.elder.core;
 
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
 
 public class Statement {
+	
 	private RuleApplication ruleApplication;
 	private List<Premise> premises;
 	
 	private String label;
 	
-	private HashSet<SGEdge> outgoingAttackEdges;
-	private HashSet<SGEdge> outgoingSupportEdges;
-	
-	public Statement(RuleApplication ruleApplication, List<Premise> premises, HashSet<SGEdge> outgoingAttackEdges, HashSet<SGEdge> outgoingSupportEdges) {
+	public Statement(RuleApplication ruleApplication, List<Premise> premises) {
 		this.ruleApplication = ruleApplication;
 		this.premises = premises;
-		this.outgoingAttackEdges = outgoingAttackEdges;
-		this.outgoingSupportEdges = outgoingSupportEdges;
 		this.label = null;
-	}
-	
-	public Statement(RuleApplication ruleApplication, List<Premise> premises) {
-		this(ruleApplication, premises, new HashSet<SGEdge>(), new HashSet<SGEdge>());
 	}
 	
 	public String getLabel() {
@@ -41,61 +36,23 @@ public class Statement {
 		return this.premises;
 	}
 	
-	public void addOutgoingAttackEdge(SGEdge edge) {
-		this.outgoingAttackEdges.add(edge);
-	}
-	public HashSet<SGEdge> getOutgoingAttackEdges() {
-		return this.outgoingAttackEdges;
-	}
-	public void addOutgoingSupportEdge(SGEdge edge) {
-		this.outgoingSupportEdges.add(edge);
-	}
-	public HashSet<SGEdge> getOutgoingSupportEdges() {
-		return this.outgoingSupportEdges;
-	}
-	
-	
-	
 	
 	public String toString() {
-		String str = "[";
-		if(this.getPremises() != null) {
-			for(Premise prem : this.getPremises()) {
-				str += prem.toString() + ",";
+		String str = "";
+		if(null != this.getRuleApplication()) {
+			return this.getRuleApplication().toString();
+		} else {
+			Iterator<Premise> it = this.getPremises().iterator();
+			if(it.hasNext()) str += it.next().toString();
+			while(it.hasNext()) {
+				str += ", " + it.next().toString();
 			}
 		}
-		str += "] ";
-		if(this.getRuleApplication() == null) return str;
-		if(this.getRuleApplication().isStrict()) {
-			str += "-> ";
-		} else if(this.getRuleApplication().isDefeasible()) {
-			str += "=> ";
-		} else {
-			str += "~> ";
-		}
-		str += this.getRuleApplication().getGeneratedAtom();
 		return str;
 	}
 	
-	public String toPrettyString() {
-		String str = "";
-		if(this.getPremises() != null) {
-			Iterator<Premise> it = this.getPremises().iterator();
-			if(it.hasNext()) str += it.next().toPrettyString();
-			while(it.hasNext()) {
-				str += ", " + it.next().toPrettyString();
-			}
-		}
-		if(this.getRuleApplication() == null) return str;
-		if(this.getRuleApplication().isStrict()) {
-			str += " -> ";
-		} else if(this.getRuleApplication().isDefeasible()) {
-			str += " => ";
-		} else {
-			str += " ~> ";
-		}
-		str += Premise.prettyPrint(this.getRuleApplication().getGeneratedAtom());
-		return str;
+	public String getID() {
+		return String.valueOf(this.hashCode());
 	}
 	
 	public int hashCode() {
@@ -106,8 +63,6 @@ public class Statement {
         if(this.getPremises() == null) {
         	return prime * result;
         }
-        
-        if(this.getPremises().isEmpty()) return result;
         
         for(Premise prem : this.getPremises()) {
         	result = prime * result + ((prem == null) ? 0 : prem.hashCode());
@@ -163,15 +118,78 @@ public class Statement {
      */
     public boolean isFactStatement() {
     	if(this.premises == null) return false;
-    	
-    	return (this.premises.iterator().next().getAtom().equals(LogicalObjectsFactory.instance().getTOPAtom()));
+    	return (this.premises.iterator().next().getAtom().equals(LogicalObjectsFactory.instance().getTOPAtom().toString()));
     }
     /**
      * Checks if this statement is a Claim statement
      * @return true if this statement is a claim statement
      */
     public boolean isClaimStatement() {
-    	
     	return (this.ruleApplication == null);
+    }
+    
+    
+    public List<SGEdge> getIncomingEdges() {
+    	List<SGEdge> edges = new LinkedList<SGEdge>();
+    	
+    	if(this.getRuleApplication() != null) {
+    		edges.addAll(this.getRuleApplication().getIncomingEdges());
+		}
+		
+		if(this.getPremises() != null) {
+			for(Premise p : this.getPremises()) {
+				edges.addAll(p.getIncomingEdges());
+			}	
+		}
+    	
+    	return edges;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON() {
+    	JSONObject json = new JSONObject();
+    	// Add the rule application JSONObject
+    	if(null == this.getRuleApplication()) {
+    		json.put("ruleApplication", null);
+    	} else {
+    		json.put("ruleApplication", this.getRuleApplication().toJSON());
+    	}
+    	// Add the premises
+    	if(null == this.getPremises()) {
+    		json.put("premises", null);
+    	} else {
+	    	JSONArray premises = new JSONArray();
+	    	for(Premise p: this.getPremises()) {
+	    		premises.add(p.toJSON());
+	    	}
+	    	json.put("premises", premises);
+    	}
+    	
+    	// Add label
+    	json.put("label", this.getLabel());
+    	
+    	return json;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toViewJSON() {
+    	JSONObject json = new JSONObject();
+    	json.put("id", "" + this.hashCode());
+    	json.put("title", this.toString());
+    	
+    	String type = "";
+    	if(this.isFactStatement()) {
+    		type = "fact";
+    	} else if(this.isClaimStatement()) {
+    		type = "claim";
+    	} else {
+    		type = "statement";
+    	}
+    	json.put("type", type);
+    	// Add label
+    	String label = (this.getLabel() != null) ? this.getLabel() : "";
+    	json.put("label", label);
+    	
+    	return json;
     }
 }

@@ -1,0 +1,9 @@
+fr/lirmm/graphik/graal/elder/labeling/BDLwithTDTest.class
+fr/lirmm/graphik/graal/elder/labeling/PDLwithTDTest.class
+fr/lirmm/graphik/graal/elder/core/RuleApplicationTest.class
+fr/lirmm/graphik/graal/elder/core/StatementTest.class
+fr/lirmm/graphik/graal/elder/labeling/BDLwithoutTDTest.class
+fr/lirmm/graphik/graal/elder/core/StatementGraphTest.class
+fr/lirmm/graphik/graal/elder/labeling/KnowledgeBaseForLabelingTesting.class
+fr/lirmm/graphik/graal/elder/labeling/PDLwithoutTDTest.class
+fr/lirmm/graphik/graal/elder/core/PremiseTest.class

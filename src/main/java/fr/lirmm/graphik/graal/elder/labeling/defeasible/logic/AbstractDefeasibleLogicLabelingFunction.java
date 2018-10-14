@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
-import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.defeasible.core.preferences.Preference.Status;
+import fr.lirmm.graphik.graal.defeasible.core.preferences.PreferenceSet;
 import fr.lirmm.graphik.graal.elder.core.Premise;
 import fr.lirmm.graphik.graal.elder.core.RuleApplication;
 import fr.lirmm.graphik.graal.elder.core.SGEdge;
@@ -17,22 +17,15 @@ import fr.lirmm.graphik.graal.elder.preference.SimplePreferenceFunction;
 
 public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFunction {
 	
-	protected DefeasibleKnowledgeBase kb;
 	protected PreferenceFunction preferenceFunction;
-	
-	
-	public AbstractDefeasibleLogicLabelingFunction() {
-	}
-	
+		
 	public AbstractDefeasibleLogicLabelingFunction(PreferenceFunction pf) {
 		this.preferenceFunction = pf;
 	}
-	
-	public void setKnowledgeBase(DefeasibleKnowledgeBase kb) {
-		this.kb = kb;
-		this.preferenceFunction = new SimplePreferenceFunction(this.kb);
-	}
 
+	public AbstractDefeasibleLogicLabelingFunction(PreferenceSet prefs) {
+		this.preferenceFunction = new SimplePreferenceFunction(prefs);
+	}
 	/**
 	 * Indicates if this attack should be considered for the semantics
 	 * @param attack an SGEdge representing the attack

@@ -6,6 +6,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import fr.lirmm.graphik.graal.api.core.Atom;
 import fr.lirmm.graphik.graal.api.core.AtomSet;
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
@@ -16,11 +19,12 @@ import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplier;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
 import fr.lirmm.graphik.graal.core.DefaultConjunctiveQuery;
-import fr.lirmm.graphik.graal.core.EmptySubstitution;
 import fr.lirmm.graphik.graal.core.atomset.LinkedListAtomSet;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
+import fr.lirmm.graphik.graal.defeasible.core.atoms.FlexibleAtom;
 import fr.lirmm.graphik.graal.defeasible.core.io.DlgpDefeasibleParser;
+import fr.lirmm.graphik.graal.defeasible.core.preferences.Preference;
 import fr.lirmm.graphik.graal.defeasible.core.rules.StrictRule;
 import fr.lirmm.graphik.graal.elder.labeling.LabelingFunction;
 import fr.lirmm.graphik.graal.elder.labeling.Labels;
@@ -32,21 +36,21 @@ import fr.lirmm.graphik.util.stream.CloseableIteratorWithoutException;
 import fr.lirmm.graphik.util.stream.IteratorException;
 
 public class StatementGraph {
-	private HashMap<Statement, Statement> statements;
-	private HashMap<Atom, Premise> premises;
-	private HashMap<Atom, List<Statement>> statementsForAtom;
-	private HashMap<Atom, List<Atom>> conflictingAtoms;
+	private HashMap<String, Statement> statements;
+	private HashMap<String, Premise> premises;
+	private HashMap<String, List<Statement>> statementsForAtom;
+	private HashMap<String, List<String>> conflictingAtoms;
 	
 	
 	private LabelingFunction labelingFunction;
 	private DefeasibleKnowledgeBase kb;
 	
 	private Statement topStatement;
-	private HashMap<Statement, Statement> statementsOfQueries;
+	public HashMap<String, Statement> statementsOfQueries;
 	
 	// ------------------------------------------------------------------------
 	// CONSTRUCTORS
-	// ------------------------------------------------------------------------
+	// ------------------------------------------------------------------------	
 	/**
 	 * Creates an SG given a KB and a labelingFunction
 	 * @param kb The defeasible Knowledge Base
@@ -55,14 +59,13 @@ public class StatementGraph {
 	public StatementGraph(DefeasibleKnowledgeBase kb, LabelingFunction labelingFunction) {
 		this.labelingFunction = labelingFunction;
 		this.kb = kb;
-		this.labelingFunction.setKnowledgeBase(this.kb);
 		
-		this.statements = new HashMap<Statement,Statement>();
-		this.premises = new HashMap<Atom, Premise>();
-		this.statementsForAtom = new HashMap<Atom, List<Statement>>();
+		this.statements = new HashMap<String,Statement>();
+		this.premises = new HashMap<String, Premise>();
+		this.statementsForAtom = new HashMap<String, List<Statement>>();
 		
-		this.conflictingAtoms = new HashMap<Atom, List<Atom>>();
-		this.statementsOfQueries = new HashMap<Statement, Statement>();
+		this.conflictingAtoms = new HashMap<String, List<String>>();
+		this.statementsOfQueries = new HashMap<String, Statement>();
 		
 		this.createTOPStatement();
 	}
@@ -71,9 +74,12 @@ public class StatementGraph {
 	 * @param kb The defeasible Knowledge Base
 	 */
 	public StatementGraph(DefeasibleKnowledgeBase kb) {
-		this(kb, new BDLwithTD());
+		this(kb, new BDLwithTD(kb.getRulePreferences()));
 	}
 	
+	public StatementGraph() {
+		
+	}
 	// ------------------------------------------------------------------------
 	// GETTERS & SETTERS
 	// ------------------------------------------------------------------------
@@ -104,7 +110,6 @@ public class StatementGraph {
 	public List<Statement> getAllStatements() {
 		List<Statement> statements = new LinkedList<Statement>();
 		statements.addAll(this.statements.values());
-		statements.add(this.topStatement);
 		statements.addAll(this.statementsOfQueries.values());
 		
 		return statements;
@@ -112,33 +117,7 @@ public class StatementGraph {
 	public Collection<Premise> getAllPremises() {
 		return this.premises.values();
 	}
-	/**
-	 * Returns All support edges in this SG
-	 * @return List of support edges in this SG
-	 */
-	public List<SGEdge> getSupportEdges() {
-		List<SGEdge> edges = new LinkedList<SGEdge>();
-		Iterator<Statement> itStatements = this.getAllStatements().iterator();
-		while(itStatements.hasNext()) {
-			Statement statement = itStatements.next();
-			edges.addAll(statement.getOutgoingSupportEdges());
-		}
-		return edges;
-	}
-	/**
-	 * Returns All attack edges in this SG
-	 * @return List of all attack edges in this SG
-	 */
-	public List<SGEdge> getAttackEdges() {
-		List<SGEdge> edges = new LinkedList<SGEdge>();
-		Iterator<Statement> itStatements = this.getAllStatements().iterator();
-		while(itStatements.hasNext()) {
-			Statement statement = itStatements.next();
-			edges.addAll(statement.getOutgoingAttackEdges());
-		}
-		return edges;
-	}
-	
+
 	// ------------------------------------------------------------------------
 	// PUBLIC METHODS
 	// ------------------------------------------------------------------------
@@ -147,14 +126,19 @@ public class StatementGraph {
 	 * @param atom Atom
 	 * @return Premise Premise of the atom
 	 */
-	public Premise getOrCreatePremiseOfAtom(Atom atom) {
-		Premise premise = this.premises.get(atom);
+	public Premise getOrCreatePremiseOfAtom(String atom) {
+		Premise premise = this.getPremise(atom);
 		if(null == premise) { // if no premise already exists for that atom then create a new one and add it.
 			premise = new Premise(atom);
 			this.premises.put(atom, premise);
 		}
 		return premise;
 	}
+	
+	public Premise getPremise(String atom) {
+		return this.premises.get(atom);
+	}
+	
 	/**
 	 * Returns the statement representing a rule application on a specific list of premises.
 	 * @param ruleApplication RuleApplication
@@ -162,33 +146,39 @@ public class StatementGraph {
 	 * @return statement
 	 */
 	public Statement getOrCreateStatement(RuleApplication ruleApplication, List<Premise> premises) {
-		Statement s1 = new Statement(ruleApplication, premises);
-		Statement statement = this.statements.get(s1);
-		if(null == statement) {
-			statement = s1;
-			this.addStatement(statement);
-		}
-		return statement;
+		return this.getOrCreateStatement(new Statement(ruleApplication, premises));
 	}
 	
-	public Statement getOrCreateStatement(AtomSet body, Atom head, Rule rule, Substitution substitution) throws IteratorException {
+	public Statement getOrCreateStatement(AtomSet body, Atom head, Rule rule) throws IteratorException {
 		// Add the head as a Premise if it doesn't already exists
-		this.getOrCreatePremiseOfAtom(head);
+		this.getOrCreatePremiseOfAtom(head.toString());
 		// Add statement
 		List<Premise> premises = this.getPremisesForAtoms(body);
 		if(premises.isEmpty()) { // body is top statement;
 			premises.add(this.getOrCreatePremiseOfAtom(this.getTOPStatement().getRuleApplication().getGeneratedAtom()));
 		}
-		RuleApplication ruleApplication = new RuleApplication(rule, substitution, head);
+		RuleApplication ruleApplication = new RuleApplication(rule, body, head);
 		return this.getOrCreateStatement(ruleApplication, premises);
 	}
 	
+	public Statement getOrCreateStatement(Statement s) {
+		Statement statement = this.getStatement(s.getID());
+		if(null == statement) {
+			statement = s;
+			this.addStatement(statement);
+		}
+		return statement;
+	}
+	
+	public Statement getStatement(String id) {
+		return this.statements.get(id);
+	}
 	/**
 	 * Returns a list of statements that supports the atom.
 	 * @param atom Atom
 	 * @return list of statements that support an atom.
 	 */
-	public List<Statement> getStatementsForAtom(Atom atom) {
+	public List<Statement> getStatementsForAtom(String atom) {
 		return this.statementsForAtom.get(atom);
 	}
 	/**
@@ -202,21 +192,22 @@ public class StatementGraph {
 		CloseableIterator<Atom> itAtoms = atoms.iterator();
 		while(itAtoms.hasNext()) {
 			Atom atom = itAtoms.next();
-			premises.add(this.getOrCreatePremiseOfAtom(atom));
+			premises.add(this.getOrCreatePremiseOfAtom(atom.toString()));
 		}
 		return premises;
 	}
 	
 	
-	public Statement addStatementForRuleApplication(AtomSet body, Atom head, Rule rule, Substitution substitution) throws IteratorException {
+	public Statement addStatementForRuleApplication(AtomSet body, Atom head, Rule rule) throws IteratorException, AtomSetException {
 		// Add the head as a Premise if it doesn't already exists
-		this.getOrCreatePremiseOfAtom(head);
+		this.getOrCreatePremiseOfAtom(head.toString());
 		// Add statement
-		List<Premise> premises = this.getPremisesForAtoms(body);
-		if(premises.isEmpty()) { // body is top statement;
-			premises.add(this.getOrCreatePremiseOfAtom(this.getTOPStatement().getRuleApplication().getGeneratedAtom()));
+		
+		if(body.isEmpty()) { // empty body, add top statement
+			body.add(LogicalObjectsFactory.instance().getTOPAtom());
 		}
-		RuleApplication ruleApplication = new RuleApplication(rule, substitution, head);
+		List<Premise> premises = this.getPremisesForAtoms(body);
+		RuleApplication ruleApplication = new RuleApplication(rule, body, head);
 		Statement statement = new Statement(ruleApplication, premises);
 		this.addStatement(statement);
 		return statement;
@@ -261,17 +252,6 @@ public class StatementGraph {
 	}
 	
 	/**
-	 * Returns the Entailment Status of a Ground atom.
-	 * @param atom Ground atom
-	 * @return String representing the entailment status of the ground atom.
-	 */
-	public String groundAtomicQuery(Atom atom) {
-		// TODO
-		this.getOrCreatePremiseOfAtom(atom);
-		return null;
-	}
-
-	/**
 	 * Returns the Entailment Status of a conjunction of ground atoms represented in a string.
 	 * @param atomsString Atom String
 	 * @return String representing the entailment status of the ground atom.
@@ -294,7 +274,7 @@ public class StatementGraph {
 	 * @throws IteratorException Something Went wrong
 	 */
 	public String groundQuery(AtomSet atoms) throws IteratorException {
-		Statement s = this.createClaimStatement(atoms);
+		Statement s = this.getOrCreateClaimStatement(atoms);
 		return this.computeLabel(s);
 	}
 	
@@ -329,16 +309,6 @@ public class StatementGraph {
 		return s.getLabel();
 	}
 	
-	/**
-	 * Computes the label for a set of atoms
-	 * @param atomSet conjunctive query
-	 * @return Label of the claim statement for the conjunctive query
-	 * @throws IteratorException something went wrong
-	 */
-	public String computeLabelForClaim(AtomSet atomSet) throws IteratorException {
-		Statement s = this.createClaimStatement(atomSet);
-		return computeLabel(s);
-	}
 	
 	/**
 	 * Compute the label of all statements
@@ -365,8 +335,10 @@ public class StatementGraph {
 	// PRIVATE METHODS
 	// ------------------------------------------------------------------------
 	private void addStatement(Statement statement) {
-		this.statements.put(statement, statement);
+		this.statements.put(statement.getID(), statement);
 		// Add the link between the statement and the atom it supports.
+		if(null == statement.getRuleApplication()) return;
+		
 		List<Statement> list = this.statementsForAtom.get(statement.getRuleApplication().getGeneratedAtom());
 		if(null == list) {
 			list = new LinkedList<Statement>();
@@ -381,65 +353,68 @@ public class StatementGraph {
 	private void createTOPStatement() {
 		Atom TOPatom = LogicalObjectsFactory.instance().getTOPAtom();
 		// Adds the TOP atom to the list of Premises
-		this.getOrCreatePremiseOfAtom(TOPatom);
+		this.getOrCreatePremiseOfAtom(TOPatom.toString());
 
 		InMemoryAtomSet head = new LinkedListAtomSet();
 		head.add(TOPatom);
 		RuleApplication ruleApplication = new RuleApplication(new StrictRule("", null, head),
-				EmptySubstitution.instance(), TOPatom);
+				null, TOPatom);
 		
 		this.topStatement = new Statement(ruleApplication, null);
 		this.topStatement.setLabel(Labels.STRICT_IN); // Label Top Statement STRICT IN
 		// Add the top statement to the statement for atom list
 		List<Statement> list = new LinkedList<Statement>();
 		list.add(this.topStatement);
-		this.statementsForAtom.put(TOPatom, list);
+		this.statementsForAtom.put(TOPatom.toString(), list);
+		this.statements.put(this.topStatement.getID(), this.topStatement);
 	}
 	
-	private void createFactStatements() throws IteratorException {
-		CloseableIterator<Atom> itFacts = this.kb.getFacts().iterator();
-		
+	private void createFactStatement(Atom atom) {
 		List<Premise> TOPpremise = new LinkedList<Premise>();
 		TOPpremise.add(this.getOrCreatePremiseOfAtom(this.getTOPStatement()
 				.getRuleApplication().getGeneratedAtom()));
 		
-		InMemoryAtomSet body = new LinkedListAtomSet();
-		body.add(this.getTOPStatement().getRuleApplication().getGeneratedAtom());
+		// Add the atom to the premise list
+		this.getOrCreatePremiseOfAtom(atom.toString());
+		// Create the rule application for this atom
 		
+		RuleApplication ruleApplication = new RuleApplication(atom);
+		// Create the Statement for this fact
+		this.getOrCreateStatement(ruleApplication, TOPpremise);
+	}
+	
+	private void createFactStatements() throws IteratorException {
+		CloseableIterator<Atom> itFacts = this.kb.getFacts().iterator();
 		while(itFacts.hasNext()) {
-			Atom atom = itFacts.next();
-			// Add the atom to the premise list
-			this.getOrCreatePremiseOfAtom(atom);
-			// Create the rule application for this atom
-			InMemoryAtomSet head = new LinkedListAtomSet();
-			head.add(atom);
-			
-			RuleApplication ruleApplication = new RuleApplication(new StrictRule("", body, head), null, atom);
-			// Create the Statement for this fact
-			this.getOrCreateStatement(ruleApplication, TOPpremise);
+			createFactStatement(itFacts.next());
 		}
 	}
 	
-	private Statement createClaimStatement(AtomSet atoms) throws IteratorException {
+	public Statement getOrCreateClaimStatement(AtomSet atoms) throws IteratorException {
 		CloseableIterator<Atom> itAtoms = atoms.iterator();
 		List<Premise> prems = new LinkedList<Premise>();
 		while(itAtoms.hasNext()) {
-			Atom atom = itAtoms.next();
-			prems.add(this.getOrCreatePremiseOfAtom(atom));
+			prems.add(this.getOrCreatePremiseOfAtom(itAtoms.next().toString()));
 		}
 		
 		Statement s = new Statement(null, prems);
 		// Add it to the history of queries if it does not already exists;
-		if(this.statementsOfQueries.containsKey(s)) {
-			s = this.statementsOfQueries.get(s);
-		} else {
-			this.statementsOfQueries.put(s, s);
+		if(!this.statementsOfQueries.containsKey(s.getID())) {
+			this.statementsOfQueries.put(s.getID(), s);
 		}
 		return s; 
 	}
 	
-	private void generateSupportandAttackEdgesForClaimStatement(Statement s) {
-		//TODO
+	public Statement getOrCreateClaimStatement(Statement s) {
+		// Create premises if not already created
+		for(Premise p: s.getPremises()) {
+			this.getOrCreatePremiseOfAtom(p.getAtom().toString());
+		}
+		// Add it to the history of queries if it does not already exists;
+		if(!this.statementsOfQueries.containsKey(s.getID())) {
+			this.statementsOfQueries.put(s.getID(), s);
+		}
+		return s; 
 	}
 	
 	private void generateSupportEdgesForPremise(Premise prem) {
@@ -449,7 +424,6 @@ public class StatementGraph {
 				if(!s.getRuleApplication().isDefeater()) {
 					SGEdge edge = new SGEdge(s, prem, false);
 					prem.addSupportEdge(edge);
-					s.addOutgoingSupportEdge(edge);
 				}
 			}
 		}
@@ -459,10 +433,6 @@ public class StatementGraph {
 		for(Premise prem: this.premises.values()) {
 			generateSupportEdgesForPremise(prem);
 		}
-	}
-	
-	private void generateAttackEdgesForPremise(Premise prem) {
-		// TODO
 	}
 	
 	private void generateAttackEdges() throws AtomSetException, HomomorphismException, IteratorException {
@@ -483,13 +453,13 @@ public class StatementGraph {
 		
 			while(itSubstitutions.hasNext()) {
 				Substitution sub = itSubstitutions.next();
-				Atom firstAtomImage = sub.createImageOf(firstAtom);
-				Atom secondAtomImage = sub.createImageOf(secondAtom);
+				Atom firstAtomImage = new FlexibleAtom(sub.createImageOf(firstAtom));
+				Atom secondAtomImage = new FlexibleAtom(sub.createImageOf(secondAtom));
 				
-				Premise prem = this.getOrCreatePremiseOfAtom(firstAtomImage);
+				Premise prem = this.getOrCreatePremiseOfAtom(firstAtomImage.toString());
 				List<Statement> statementsForAtom = this.getStatementsForAtom(prem.getAtom());
 				
-				Premise prem2 = this.getOrCreatePremiseOfAtom(secondAtomImage);
+				Premise prem2 = this.getOrCreatePremiseOfAtom(secondAtomImage.toString());
 				List<Statement> statementsForAtom2 = this.getStatementsForAtom(prem2.getAtom());
 					
 				// Create Attack Links against the first Atom
@@ -508,7 +478,7 @@ public class StatementGraph {
 	private void createAttackLinksBetweenPremiseAndStatements(Premise prem, 
 			List<Statement> statementsAgainstPremise, List<Statement> statementsForPremise) {
 		
-		List<Atom> conflicts = new LinkedList<Atom>();
+		List<String> conflicts = new LinkedList<String>();
 		
 		if(statementsAgainstPremise == null) {
 			this.conflictingAtoms.put(prem.getAtom(), conflicts);
@@ -519,18 +489,146 @@ public class StatementGraph {
 			if(!s.getRuleApplication().isDefeater()) { // If not a defeater then it attacks the premise
 				SGEdge edge = new SGEdge(s, prem, true);
 				prem.addAttackEdge(edge);
-				s.addOutgoingAttackEdge(edge);
 				conflicts.add(s.getRuleApplication().getGeneratedAtom());
 			} else { // It is a defeater, it must attack the rule application
 				if(statementsForPremise == null) continue;
 				for(Statement sForPremise: statementsForPremise) {
 					SGEdge edge = new SGEdge(s, sForPremise.getRuleApplication(), true);
 					sForPremise.getRuleApplication().addAttackEdge(edge);
-					s.addOutgoingAttackEdge(edge);
 				}
 			}
 		}
 		
 		this.conflictingAtoms.put(prem.getAtom(), conflicts);
 	}
+	
+	
+	
+	/**
+     * Verifies if two StatementGraphs are equivalent or not.
+     * @param obj the object to test
+     * @return true if the objects are equal, false otherwise.
+     */
+    public boolean equals(Object obj) {
+        if (this == obj) { return true; }
+        if (obj == null) { return false; }
+        if (!(obj instanceof StatementGraph)) { return false; }
+        
+        StatementGraph other = (StatementGraph) obj;
+        
+        // They must have the same number of statements Statements
+        if(this.getAllStatements().size() != other.getAllStatements().size()) return false;
+        // They must have the same Statements
+        for(Statement s: this.statements.values()) {
+        	if(null == other.getStatement(s.getID())) {
+        		return false;
+        	}
+        }
+        
+        // They must have the same preferences
+        for(Preference pref: this.getKB().getRulePreferences().values()) {
+        	if(null == other.getKB().getRulePreferences().get(pref.stringify())) {
+        		return false;
+        	}
+        }
+        
+        return true;
+    }
+	
+	
+	@SuppressWarnings("unchecked")
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+		
+		// All statements and edges to JSON
+    	Collection<Statement> statementsList = this.statements.values();
+    	Collection<Statement> queryList = this.statementsOfQueries.values();
+    	
+    	JSONArray edgesJSON = new JSONArray();
+    	JSONArray statementsJSON = new JSONArray();
+		JSONArray queryStatementsJSON = new JSONArray();
+    	JSONArray rulePreferencesJSON = new JSONArray();
+    	
+    	for(Statement s: statementsList) {
+    		statementsJSON.add(s.toJSON());
+    		for(SGEdge e: s.getIncomingEdges()) {
+    			edgesJSON.add(e.toJSON(s));
+    		}
+    	}
+    	
+    	for(Statement s: queryList) {
+    		queryStatementsJSON.add(s.toJSON());
+    		for(SGEdge e: s.getIncomingEdges()) {
+    			edgesJSON.add(e.toJSON(s));
+    		}
+    	}
+    	
+    	
+    	// Adding Preferences
+    	for(Preference pref: this.getKB().getRulePreferences().values()) {
+    		rulePreferencesJSON.add(pref.stringify());
+    	}
+    	
+    	json.put("statements", statementsJSON);
+    	json.put("edges", edgesJSON);
+    	json.put("rulePreferences", rulePreferencesJSON);
+    	json.put("queryStatements", queryStatementsJSON);
+    	
+		return json;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public String toViewJSON() {
+    	JSONObject json = new JSONObject();
+    	
+    	// All statements to JSON
+    	List<Statement> statementsList = this.getAllStatements();
+
+    	JSONArray edges = new JSONArray();
+    	JSONArray statementsJSON = new JSONArray();
+    	
+    	for(Statement s: statementsList) {
+    		// add statement to json string list
+    		statementsJSON.add(s.toViewJSON());
+    		
+    		// generate incoming edges to rule application
+    		Iterator<SGEdge> itAtt;
+    		Iterator<SGEdge> itSupp;
+    		if(s.getRuleApplication() != null) {
+	    		itAtt = s.getRuleApplication().getAttackEdges().iterator();
+	    		while(itAtt.hasNext()) {
+	    			SGEdge e = itAtt.next();
+	    			edges.add(e.toViewJSON(s));
+	    		}
+	    		itSupp = s.getRuleApplication().getSupportEdges().iterator();
+	    		while(itSupp.hasNext()) {
+	    			SGEdge e = itSupp.next();
+	    			edges.add(e.toViewJSON(s));
+	    		}
+    		}
+    		
+    		if(s.getPremises() == null) continue;
+    		
+    		Iterator<Premise> itPremises = s.getPremises().iterator();
+    		while(itPremises.hasNext()) {
+    			Premise p = itPremises.next();
+    			itAtt = p.getAttackEdges().iterator();
+    			while(itAtt.hasNext()) {
+        			SGEdge e = itAtt.next();
+        			edges.add(e.toViewJSON(s));
+        		}
+        		itSupp = p.getSupportEdges().iterator();
+        		while(itSupp.hasNext()) {
+        			SGEdge e = itSupp.next();
+        			edges.add(e.toViewJSON(s));
+        		}
+    		}	
+    	}
+    	
+    
+    	json.put("statements", statementsJSON);
+    	json.put("edges", edges);
+    	
+    	return json.toJSONString();
+    }
 }

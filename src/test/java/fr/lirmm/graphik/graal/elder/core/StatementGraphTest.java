@@ -32,19 +32,19 @@ public class StatementGraphTest {
 		Assert.assertEquals(7, sg.getAllStatements().size());
 	}
 	
-	@Test
-	public void shouldCreateAllSupportEdges() throws AtomSetException, IteratorException, ChaseException, HomomorphismException {
-		Assert.assertEquals(6, sg.getSupportEdges().size());
-	}
-	
-	@Test 
-	public void shouldCreateAllAttackEdges() throws IteratorException, ChaseException, AtomSetException, HomomorphismException {
-//		List<SGEdge> edges = sg.getAttackEdges();
-//		for(SGEdge edge: edges) {
-//			System.out.println(edge);
-//		}
-		Assert.assertEquals(3, sg.getAttackEdges().size());
-	}
+//	@Test
+//	public void shouldCreateAllSupportEdges() throws AtomSetException, IteratorException, ChaseException, HomomorphismException {
+//		Assert.assertEquals(6, sg.getSupportEdges().size());
+//	}
+//	
+//	@Test 
+//	public void shouldCreateAllAttackEdges() throws IteratorException, ChaseException, AtomSetException, HomomorphismException {
+////		List<SGEdge> edges = sg.getAttackEdges();
+////		for(SGEdge edge: edges) {
+////			System.out.println(edge);
+////		}
+//		Assert.assertEquals(3, sg.getAttackEdges().size());
+//	}
 	
 	
 }

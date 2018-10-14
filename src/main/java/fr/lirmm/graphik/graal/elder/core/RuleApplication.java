@@ -1,77 +1,111 @@
 package fr.lirmm.graphik.graal.elder.core;
 
+import org.json.simple.JSONObject;
+
 import fr.lirmm.graphik.graal.api.core.Atom;
+import fr.lirmm.graphik.graal.api.core.AtomSet;
 import fr.lirmm.graphik.graal.api.core.Rule;
-import fr.lirmm.graphik.graal.api.core.Substitution;
+import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
 import fr.lirmm.graphik.graal.defeasible.core.rules.DefeasibleRule;
 import fr.lirmm.graphik.graal.defeasible.core.rules.DefeaterRule;
 import fr.lirmm.graphik.graal.defeasible.core.rules.PreferenceRule;
+import fr.lirmm.graphik.util.stream.CloseableIterator;
+import fr.lirmm.graphik.util.stream.IteratorException;
 
 public class RuleApplication extends AbstractAssumption {
-	private Rule rule;
-	private Substitution substitution;
-	private Atom generatedAtom;
+	// Move this to the LogicalObjectsFactory if you need to use these distinctions elsewhere
+	static final String STRICT = "strict", DEFEASIBLE = "defeasible", DEFEATER = "defeater", PREFERENCE_RULE = "preference";
 	
-	public RuleApplication(Rule rule, Substitution substitution, Atom generatedAtom) {
+	private String ruleLabel;
+	private String type;
+	private String title;
+	private String generatedAtom;
+	
+	public RuleApplication(Rule rule, AtomSet instantiatedBody, Atom generatedAtom) {
 		super();
-		this.rule = rule;
-		this.substitution = substitution;
-		this.generatedAtom = generatedAtom;
+		String implication = "";
+		this.title = "";
+		this.ruleLabel = rule.getLabel();
+		this.generatedAtom = generatedAtom.toString();
+		
+		// find the type of the rule
+		if(rule instanceof DefeasibleRule) {
+			this.type = DEFEASIBLE;
+			implication = "=>";
+		} else if (rule instanceof DefeaterRule) {
+			this.type = DEFEATER;
+			implication = "~>";
+		} else if (rule instanceof PreferenceRule) {
+			this.type = PREFERENCE_RULE;
+			implication = "->";
+		} else {
+			this.type = STRICT;
+			implication = "->";
+		}
+		if(null != instantiatedBody) {
+			// create a string representation of this rule application
+			CloseableIterator<Atom> it = instantiatedBody.iterator();
+			
+			try {
+				if(it.hasNext()) this.title += it.next().toString();
+			
+				while(it.hasNext()) {
+					this.title += ", " + it.next().toString();
+				}
+			} catch (IteratorException e) {
+				e.printStackTrace();
+			}
+		}
+		this.title += " " + implication + " ";
+		this.title += generatedAtom;
 	}
 	
-	public Atom getGeneratedAtom() {
+	public RuleApplication(Atom fact) {
+		this.generatedAtom = fact.toString();
+		this.title = LogicalObjectsFactory.instance().getTOPAtom().toString() + " -> " + this.generatedAtom;
+		this.type = STRICT;
+		this.ruleLabel = "";
+	}
+	
+	public RuleApplication(String ruleLabel, String generatedAtom, String title, String type, String label) {
+		this.ruleLabel = ruleLabel;
+		this.generatedAtom = generatedAtom;
+		this.title = title;
+		this.type = type;
+		this.setLabel(label);
+	}
+	
+	public String getGeneratedAtom() {
 		return this.generatedAtom;
 	}
 	
-	public Rule getRule() {
-		return this.rule;
-	}
-	
-	public Substitution getSubstitution() {
-		return this.substitution;
+	public String getRuleLabel() {
+		return this.ruleLabel;
 	}
 	
 	public boolean isDefeater() {
-		return (this.rule instanceof DefeaterRule);
+		return (this.type.equals(DEFEATER));
 	}
+	
 	public boolean isDefeasible() {
-		return (this.rule instanceof DefeasibleRule);
+		return (this.type.equals(DEFEASIBLE));
 	}
+	
 	public boolean isPreferenceRule() {
-		return (this.rule instanceof PreferenceRule);
+		return (this.type.equals(PREFERENCE_RULE));
 	}
+	
 	public boolean isStrict() {
-		return (!this.isDefeasible() && !this.isDefeater() && !this.isPreferenceRule());
+		return (this.type.equals(STRICT));
 	}
 	
 	
-	public String toString() {
-		String str = "[";
-		if (this.getRule() != null) {
-			str += this.getRule().toString();
-		}
-		
-		if (this.getGeneratedAtom() != null)
-			str += "] ==> " + this.getGeneratedAtom().toString();
-		
-		return str;
+	public String toString() {	
+		return this.title;
 	}
 	
 	public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((this.getRule() == null) ? 0 : this.getRule().hashCode());
-        result = prime * result + ((this.getSubstitution() == null) ? 0 : this.getSubstitution().hashCode());
-        result = prime * result + ((this.getGeneratedAtom() == null) ? 0 : this.getGeneratedAtom().hashCode());
-        
-        if(this.isDefeasible()) {
-        	result = prime * result + 1;
-        } else if(this.isDefeater()) {
-        	result = prime * result + 2;
-        } else {
-        	result = prime * result + 3;
-        }
-        return result;
+        return this.title.hashCode();
     }
 	
 	/**
@@ -83,19 +117,25 @@ public class RuleApplication extends AbstractAssumption {
         if (!(obj instanceof RuleApplication)) { return false; }
         
         RuleApplication other = (RuleApplication) obj;
-        // They must have the same Rule
-        if (this.getRule() == null) {
-            if (other.getRule() != null) { return false; }
-        }
-        else if (!this.getRule().equals(other.getRule())) { return false; }
-        else if (this.isDefeasible() && !other.isDefeasible()) { return false; }
-        else if (this.isDefeater() && !other.isDefeater()) { return false; }
-        
-        // They must use the same Homomorphism
-        if (this.getSubstitution() == null) {
-            if (other.getSubstitution() != null) { return false; }
-        } else if (!this.getSubstitution().equals(other.getSubstitution())) { return false; }
+        // They must have the same label
+        if (!this.ruleLabel.equals(other.ruleLabel)) return false;
+        // They must have the same title
+        // TODO error prone! the order of the body atoms might change
+        if (!this.title.equals(other.title)) return false;
         
         return true;
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON() {
+    	JSONObject json = new JSONObject();
+    	json.put("generatedAtom", this.generatedAtom);
+    	json.put("title", this.title);
+    	json.put("type", this.type);
+    	json.put("ruleLabel", this.ruleLabel);
+    	json.put("label", this.getLabel());
+    	
+    	return json;
     }
 }

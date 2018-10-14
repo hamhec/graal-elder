@@ -13,8 +13,8 @@ public class PremiseTest {
 		Atom a = DlgpDefeasibleParser.parseAtom("p(a).");
 		Atom a2 = DlgpDefeasibleParser.parseAtom("p(a).");
 		
-		Premise prem1 = new Premise(a);
-		Premise prem2 = new Premise(a2);
+		Premise prem1 = new Premise(a.toString());
+		Premise prem2 = new Premise(a2.toString());
 		Assert.assertEquals(prem1, prem2);
 	}
 	
@@ -23,8 +23,8 @@ public class PremiseTest {
 		Atom a = DlgpDefeasibleParser.parseAtom("p(a).");
 		Atom a2 = DlgpDefeasibleParser.parseAtom("p(a).");
 		
-		Premise prem1 = new Premise(a);
-		Premise prem2 = new Premise(a2);
+		Premise prem1 = new Premise(a.toString());
+		Premise prem2 = new Premise(a2.toString());
 		Assert.assertEquals(prem1.hashCode(), prem2.hashCode());
 	}
 }

@@ -7,6 +7,7 @@ import java.util.List;
 
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.defeasible.core.preferences.Preference;
+import fr.lirmm.graphik.graal.defeasible.core.preferences.PreferenceSet;
 import fr.lirmm.graphik.graal.defeasible.core.preferences.Preference.Status;
 import fr.lirmm.graphik.graal.elder.core.Premise;
 import fr.lirmm.graphik.graal.elder.core.RuleApplication;
@@ -26,8 +27,8 @@ public class PDLwithTD extends AbstractDefeasibleLogicLabelingFunction {
 	
 	
 	
-	public PDLwithTD() {
-		super();
+	public PDLwithTD(PreferenceSet prefs) {
+		super(prefs);
 	}
 	
 	public PDLwithTD(PreferenceFunction pf) {

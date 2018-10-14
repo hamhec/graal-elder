@@ -17,8 +17,9 @@ public class BDLwithoutTDTest extends KnowledgeBaseForLabelingTesting {
 	
 	@BeforeClass
 	public static void setupSG() throws IteratorException, ChaseException, AtomSetException, HomomorphismException {
-		sg = new StatementGraph(kb, new PDLwithoutTD());
+		sg = new StatementGraph(kb, new PDLwithoutTD(kb.getRulePreferences()));
 		sg.build();
+		
 	}
 	
 	// ------------------------------------------------------------------------
@@ -41,7 +42,6 @@ public class BDLwithoutTDTest extends KnowledgeBaseForLabelingTesting {
 	public void shouldLabelConclusionOfInferiorRuleOUT() throws IteratorException, AtomSetException {
 		String query = "fly(kowalski).";
 		String label = sg.groundQuery(query);
-		
 		Assert.assertEquals(Labels.DEFEASIBLE_OUT, label);
 	}
 	

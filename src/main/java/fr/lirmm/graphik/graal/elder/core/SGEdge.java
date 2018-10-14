@@ -1,5 +1,6 @@
 package fr.lirmm.graphik.graal.elder.core;
 
+import org.json.simple.JSONObject;
 
 public class SGEdge {
 	private Statement source;
@@ -79,6 +80,33 @@ public class SGEdge {
         }
         else if (!this.getTarget().equals(other.getTarget())) { return false; }
         
-                return true;
+        return true;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON(Statement targetStatement) {
+    	JSONObject json = new JSONObject();
+    	json.put("source", this.source.getID());
+    	// if it is attacking a rule application then we need to store the statement
+    	String target = (this.targetIsRuleApplication()) ? targetStatement.getID() : this.target.toString();
+    	json.put("target", target);
+    	json.put("label", this.getLabel());
+    	
+    	json.put("type", this.isAttack);
+    	return json;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toViewJSON(Statement target) {
+    	JSONObject json = new JSONObject();
+    	json.put("source", this.source.getID());
+    	json.put("target", target.getID());
+    	String label = (this.getLabel() != null) ? this.getLabel() : "";
+    	json.put("label", label);
+    	
+    	String type = (this.isAttack == true) ? "attack" : "support";
+    	json.put("type", type);
+    	
+    	return json;
     }
 }

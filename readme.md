@@ -9,7 +9,7 @@ You can either import this module using Maven Central (recommended). Add the fol
 <dependency>
       <groupId>fr.lirmm.graphik</groupId>
       <artifactId>graal-elder</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1</version>
 </dependency>
 ```
 

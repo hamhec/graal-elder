@@ -1,9 +1,6 @@
 package fr.lirmm.graphik.graal.elder.core;
 
-import java.util.Iterator;
-
-import fr.lirmm.graphik.graal.api.core.Atom;
-import fr.lirmm.graphik.graal.api.core.Term;
+import org.json.simple.JSONObject;
 
 /**
  * 
@@ -11,20 +8,20 @@ import fr.lirmm.graphik.graal.api.core.Term;
  * A Permise should be unique for each Atom. It encapsulates the Atom's label.
  */
 public class Premise extends AbstractAssumption {
-	private Atom atom;
+	private String atom;
 
-	public Premise(Atom atom) {
+	public Premise(String atom) {
 		super();
 		this.atom = atom;
 	}
 	
-	public Premise(Atom atom, String label) {
+	public Premise(String atom, String label) {
 		this(atom);
 		this.setLabel(label);
 	}
 	
 	
-	public Atom getAtom() {
+	public String getAtom() {
 		return this.atom;
 	}
 	
@@ -33,23 +30,13 @@ public class Premise extends AbstractAssumption {
 		return this.atom.toString();
 	}
 	
-	public String toPrettyString() {
-		return prettyPrint(this.atom);
-	}
-	
 	public int hashCode() {
+		if(this.getAtom() == null) {
+			int i = 0;
+		}
         return this.getAtom().hashCode();
     }
 	
-	public static String prettyPrint(Atom atom) {
-		String str = atom.getPredicate().getIdentifier().toString();
-		Iterator<Term> it = atom.getTerms().iterator();
-		str += "(" + it.next();
-		while(it.hasNext()) {
-			str += ", " + it.next();
-		}
-		return str + ")";
-	}
 	/**
      * Verifies if two RuleApplications are equivalent or not.
      */
@@ -61,5 +48,15 @@ public class Premise extends AbstractAssumption {
         Premise other = (Premise) obj;
         // They must have the same Atom
         return (this.getAtom().equals(other.getAtom()));
+    }
+    
+    
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON() {
+    	JSONObject json = new JSONObject();
+    	json.put("atom", this.atom);
+    	json.put("label", this.getLabel());
+    	
+    	return json;
     }
 }

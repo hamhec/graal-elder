@@ -17,7 +17,7 @@ public class BDLwithTDTest extends KnowledgeBaseForLabelingTesting {
 	
 	@BeforeClass
 	public static void setupSG() throws IteratorException, ChaseException, AtomSetException, HomomorphismException {
-		sg = new StatementGraph(kb, new BDLwithTD());
+		sg = new StatementGraph(kb, new BDLwithTD(kb.getRulePreferences()));
 		sg.build();
 	}
 	

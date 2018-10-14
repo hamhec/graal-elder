@@ -2,11 +2,14 @@ package fr.lirmm.graphik.graal.elder.reasoning;
 
 import fr.lirmm.graphik.graal.api.core.Atom;
 import fr.lirmm.graphik.graal.api.core.AtomSet;
+import fr.lirmm.graphik.graal.api.core.AtomSetException;
 import fr.lirmm.graphik.graal.api.core.Rule;
 import fr.lirmm.graphik.graal.api.core.Substitution;
 import fr.lirmm.graphik.graal.api.forward_chaining.ChaseHaltingCondition;
 import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplicationHandler;
 import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplier;
+import fr.lirmm.graphik.graal.core.atomset.LinkedListAtomSet;
+import fr.lirmm.graphik.graal.defeasible.core.atoms.FlexibleAtom;
 import fr.lirmm.graphik.graal.elder.core.StatementGraph;
 import fr.lirmm.graphik.graal.forward_chaining.halting_condition.FrontierRestrictedChaseHaltingCondition;
 import fr.lirmm.graphik.graal.forward_chaining.halting_condition.HaltingConditionWithHandler;
@@ -38,12 +41,22 @@ public class SGRuleApplicationHandler implements RuleApplicationHandler{
 		// atomsToAdd is not reliable as atoms reference could be deleted if they are considered redundant
 		// so we create our own image of those facts
 		CloseableIteratorWithoutException<Atom> itNewFacts = substitution.createImageOf(rule.getHead()).iterator();
-		AtomSet body = substitution.createImageOf(rule.getBody());
+		CloseableIteratorWithoutException<Atom> itBody = substitution.createImageOf(rule.getBody()).iterator();
+		AtomSet body = new LinkedListAtomSet();
+		while(itBody.hasNext()) {
+			try {
+				body.add(new FlexibleAtom(itBody.next()));
+			} catch (AtomSetException e) {
+				e.printStackTrace();
+			}
+		}
 		// Add a rule application (statement) for each generated Atom
 		while(itNewFacts.hasNext()) {
 			try {
-				sg.addStatementForRuleApplication(body, itNewFacts.next(), rule, substitution);
+				sg.addStatementForRuleApplication(body, new FlexibleAtom(itNewFacts.next()), rule);
 			} catch (IteratorException e) {
+				e.printStackTrace();
+			} catch (AtomSetException e) {
 				e.printStackTrace();
 			} 
 		}
