@@ -29,6 +29,9 @@ import fr.lirmm.graphik.graal.defeasible.core.rules.StrictRule;
 import fr.lirmm.graphik.graal.elder.labeling.LabelingFunction;
 import fr.lirmm.graphik.graal.elder.labeling.Labels;
 import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithTD;
+import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithoutTD;
+import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.PDLwithTD;
+import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.PDLwithoutTD;
 import fr.lirmm.graphik.graal.elder.reasoning.SGRuleApplicationHandler;
 import fr.lirmm.graphik.graal.homomorphism.SmartHomomorphism;
 import fr.lirmm.graphik.util.stream.CloseableIterator;
@@ -57,17 +60,9 @@ public class StatementGraph {
 	 * @param labelingFunction LabelingFunction
 	 */
 	public StatementGraph(DefeasibleKnowledgeBase kb, LabelingFunction labelingFunction) {
+		this();
 		this.labelingFunction = labelingFunction;
 		this.kb = kb;
-		
-		this.statements = new HashMap<String,Statement>();
-		this.premises = new HashMap<String, Premise>();
-		this.statementsForAtom = new HashMap<String, List<Statement>>();
-		
-		this.conflictingAtoms = new HashMap<String, List<String>>();
-		this.statementsOfQueries = new HashMap<String, Statement>();
-		
-		this.createTOPStatement();
 	}
 	/**
 	 * Creates an EDG given a KB
@@ -78,7 +73,30 @@ public class StatementGraph {
 	}
 	
 	public StatementGraph() {
+		this.statements = new HashMap<String,Statement>();
+		this.premises = new HashMap<String, Premise>();
+		this.statementsForAtom = new HashMap<String, List<Statement>>();
 		
+		this.conflictingAtoms = new HashMap<String, List<String>>();
+		this.statementsOfQueries = new HashMap<String, Statement>();
+		
+		this.createTOPStatement();
+	}
+	
+	public StatementGraph(DefeasibleKnowledgeBase kb, String labelingFunctionString) {
+		this();
+		this.kb = kb;
+		if(labelingFunctionString.equals(LabelingFunction.BDLwithoutTD)) {
+			this.labelingFunction = new BDLwithoutTD(kb.getRulePreferences());
+		} else if(labelingFunctionString.equals(LabelingFunction.BDLwithTD)) {
+			this.labelingFunction = new BDLwithTD(kb.getRulePreferences());
+		} else if(labelingFunctionString.equals(LabelingFunction.PDLwithoutTD)) {
+			this.labelingFunction = new PDLwithoutTD(kb.getRulePreferences());
+		} else if(labelingFunctionString.equals(LabelingFunction.PDLwithTD)) {
+			this.labelingFunction = new PDLwithTD(kb.getRulePreferences());
+		} else {
+			this.labelingFunction = new BDLwithTD(kb.getRulePreferences());
+		}
 	}
 	// ------------------------------------------------------------------------
 	// GETTERS & SETTERS

@@ -7,6 +7,9 @@ import fr.lirmm.graphik.graal.elder.core.Statement;
 import fr.lirmm.graphik.graal.elder.preference.PreferenceFunction;
 
 public abstract class LabelingFunction {
+	
+	public static final String BDLwithTD="BDLTD", BDLwithoutTD="BDLnoTD", PDLwithTD="BDLTD", PDLwithoutTD="PDLnoTD";
+	
 	/**
 	 * Labels a permise
 	 * @param premise a permise
