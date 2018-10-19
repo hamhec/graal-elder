@@ -147,6 +147,11 @@ public class PersistanceTest {
 		String sg1String = PersistanceFactory.instance().deflateStatementGraph(sg);
 		StatementGraph sg2 = PersistanceFactory.instance().inflateStatementGraph(sg1String);
 		
+		System.out.println(sg.toViewJSON());
+		System.out.println(sg2.toViewJSON());
+		
 		Assert.assertTrue(sg.equals(sg2));
 	}
+	
+	//TODO unitest for toviewJSON();
 }

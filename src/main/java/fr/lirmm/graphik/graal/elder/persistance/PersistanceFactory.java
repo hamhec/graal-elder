@@ -85,6 +85,7 @@ public class PersistanceFactory {
 		String sourceID = (String) edgeJSON.get("source");
 		String targetID = (String) edgeJSON.get("target");
 		boolean type = (boolean) edgeJSON.get("type");
+		String label = (String) edgeJSON.get("label");
 		
 		Statement source = sg.getStatement(sourceID);
 		Assumption target = null;
@@ -96,7 +97,10 @@ public class PersistanceFactory {
 			}
 			target = sg.getStatement(targetID).getRuleApplication();
 		}
+		
 		SGEdge edge = new SGEdge(source, target, type);
+		edge.setLabel(label);
+		
 		if(edge.isAttack()) {
 			target.addAttackEdge(edge);
 		} else {

@@ -101,6 +101,7 @@ public class SGEdge {
     	JSONObject json = new JSONObject();
     	json.put("source", this.source.getID());
     	json.put("target", target.getID());
+
     	String label = (this.getLabel() != null) ? this.getLabel() : "";
     	json.put("label", label);
     	
