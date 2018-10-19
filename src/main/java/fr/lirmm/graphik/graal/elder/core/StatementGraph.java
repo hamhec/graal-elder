@@ -609,37 +609,8 @@ public class StatementGraph {
     		// add statement to json string list
     		statementsJSON.add(s.toViewJSON());
     		
-    		// generate incoming edges to rule application
-    		Iterator<SGEdge> itAtt;
-    		Iterator<SGEdge> itSupp;
-    		if(s.getRuleApplication() != null) {
-	    		itAtt = s.getRuleApplication().getAttackEdges().iterator();
-	    		while(itAtt.hasNext()) {
-	    			SGEdge e = itAtt.next();
-	    			edges.add(e.toViewJSON(s));
-	    		}
-	    		itSupp = s.getRuleApplication().getSupportEdges().iterator();
-	    		while(itSupp.hasNext()) {
-	    			SGEdge e = itSupp.next();
-	    			edges.add(e.toViewJSON(s));
-	    		}
-    		}
-    		
-    		if(s.getPremises() == null) continue;
-    		
-    		Iterator<Premise> itPremises = s.getPremises().iterator();
-    		while(itPremises.hasNext()) {
-    			Premise p = itPremises.next();
-    			itAtt = p.getAttackEdges().iterator();
-    			while(itAtt.hasNext()) {
-        			SGEdge e = itAtt.next();
-        			edges.add(e.toViewJSON(s));
-        		}
-        		itSupp = p.getSupportEdges().iterator();
-        		while(itSupp.hasNext()) {
-        			SGEdge e = itSupp.next();
-        			edges.add(e.toViewJSON(s));
-        		}
+    		for(SGEdge e: s.getIncomingEdges()) {
+    			edges.add(e.toViewJSON(s));
     		}	
     	}
     	
