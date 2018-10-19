@@ -14,16 +14,19 @@ import fr.lirmm.graphik.graal.api.core.AtomSet;
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
 import fr.lirmm.graphik.graal.api.core.InMemoryAtomSet;
 import fr.lirmm.graphik.graal.api.core.Rule;
+import fr.lirmm.graphik.graal.api.core.RuleSet;
 import fr.lirmm.graphik.graal.api.core.Substitution;
 import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplier;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
 import fr.lirmm.graphik.graal.core.DefaultConjunctiveQuery;
 import fr.lirmm.graphik.graal.core.atomset.LinkedListAtomSet;
+import fr.lirmm.graphik.graal.core.ruleset.LinkedListRuleSet;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
 import fr.lirmm.graphik.graal.defeasible.core.atoms.FlexibleAtom;
 import fr.lirmm.graphik.graal.defeasible.core.io.DlgpDefeasibleParser;
+import fr.lirmm.graphik.graal.defeasible.core.preferences.AlternativePreference;
 import fr.lirmm.graphik.graal.defeasible.core.preferences.Preference;
 import fr.lirmm.graphik.graal.defeasible.core.rules.StrictRule;
 import fr.lirmm.graphik.graal.elder.labeling.LabelingFunction;
@@ -243,7 +246,7 @@ public class StatementGraph {
 		// Build Statements for Fact (they are Strict Facts by default)
 		this.createFactStatements();
 		// Build Statements for each rule application
-		this.kb.staturate(this.getRuleApplier());
+		this.kb.saturate(this.getRuleApplier());
 		// Add the Support links between Statements
 		this.generateSupportEdges();
 		// Add the Attack links between Statements
@@ -454,9 +457,11 @@ public class StatementGraph {
 	}
 	
 	private void generateAttackEdges() throws AtomSetException, HomomorphismException, IteratorException {
-		if(this.kb.getNegativeConstraints() == null) return;
+		RuleSet ncs = new LinkedListRuleSet();
+		ncs.addAll(this.kb.getNegativeConstraints().iterator());
+		ncs.addAll(LogicalObjectsFactory.instance().getNegativeConstraintsOnAlternativePreferences().iterator());
 		
-		for(Rule nc: this.kb.getNegativeConstraints()) {
+		for(Rule nc: ncs) {
 			CloseableIteratorWithoutException<Atom> itNcBody = nc.getBody().iterator();
 			// Get the two Conflicting Atoms
 			Atom firstAtom = itNcBody.next();
@@ -471,8 +476,21 @@ public class StatementGraph {
 		
 			while(itSubstitutions.hasNext()) {
 				Substitution sub = itSubstitutions.next();
-				Atom firstAtomImage = new FlexibleAtom(sub.createImageOf(firstAtom));
-				Atom secondAtomImage = new FlexibleAtom(sub.createImageOf(secondAtom));
+				Atom firstAtomImage = null;
+				Atom secondAtomImage = null;
+				// Special test to obtain alternative preference rather than normal atoms
+				if(firstAtom instanceof AlternativePreference) {
+					firstAtomImage = new AlternativePreference(sub.createImageOf(firstAtom));
+				} else {
+					firstAtomImage = new FlexibleAtom(sub.createImageOf(firstAtom));
+				}
+				if(secondAtom instanceof AlternativePreference) {
+					secondAtomImage = new AlternativePreference(sub.createImageOf(secondAtom));
+				} else {
+					secondAtomImage = new FlexibleAtom(sub.createImageOf(secondAtom));
+				}
+				
+				 
 				
 				Premise prem = this.getOrCreatePremiseOfAtom(firstAtomImage.toString());
 				List<Statement> statementsForAtom = this.getStatementsForAtom(prem.getAtom());
@@ -545,7 +563,7 @@ public class StatementGraph {
         
         // They must have the same preferences
         for(Preference pref: this.getKB().getRulePreferences().values()) {
-        	if(null == other.getKB().getRulePreferences().get(pref.stringify())) {
+        	if(null == other.getKB().getRulePreferences().get(pref.toString())) {
         		return false;
         	}
         }
@@ -584,7 +602,7 @@ public class StatementGraph {
     	
     	// Adding Preferences
     	for(Preference pref: this.getKB().getRulePreferences().values()) {
-    		rulePreferencesJSON.add(pref.stringify());
+    		rulePreferencesJSON.add(pref.toString());
     	}
     	
     	json.put("statements", statementsJSON);

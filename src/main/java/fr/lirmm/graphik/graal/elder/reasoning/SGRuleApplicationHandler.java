@@ -10,6 +10,8 @@ import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplicationHandler;
 import fr.lirmm.graphik.graal.api.forward_chaining.RuleApplier;
 import fr.lirmm.graphik.graal.core.atomset.LinkedListAtomSet;
 import fr.lirmm.graphik.graal.defeasible.core.atoms.FlexibleAtom;
+import fr.lirmm.graphik.graal.defeasible.core.preferences.AlternativePreference;
+import fr.lirmm.graphik.graal.defeasible.core.rules.PreferenceRule;
 import fr.lirmm.graphik.graal.elder.core.StatementGraph;
 import fr.lirmm.graphik.graal.forward_chaining.halting_condition.FrontierRestrictedChaseHaltingCondition;
 import fr.lirmm.graphik.graal.forward_chaining.halting_condition.HaltingConditionWithHandler;
@@ -53,7 +55,14 @@ public class SGRuleApplicationHandler implements RuleApplicationHandler{
 		// Add a rule application (statement) for each generated Atom
 		while(itNewFacts.hasNext()) {
 			try {
-				sg.addStatementForRuleApplication(body, new FlexibleAtom(itNewFacts.next()), rule);
+				FlexibleAtom newAtom = null;
+				// If the generated atom is a prefernce then instanticate a preference.
+				if(rule instanceof PreferenceRule) {
+					newAtom = new AlternativePreference(itNewFacts.next());
+				} else {
+					newAtom = new FlexibleAtom(itNewFacts.next());
+				}
+				sg.addStatementForRuleApplication(body, newAtom, rule);
 			} catch (IteratorException e) {
 				e.printStackTrace();
 			} catch (AtomSetException e) {

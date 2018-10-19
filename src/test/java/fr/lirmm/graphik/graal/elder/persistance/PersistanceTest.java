@@ -2,7 +2,6 @@ package fr.lirmm.graphik.graal.elder.persistance;
 
 import org.json.simple.parser.ParseException;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
@@ -10,6 +9,7 @@ import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.elder.core.StatementGraph;
+import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithTD;
 import fr.lirmm.graphik.util.stream.IteratorException;
 
 public class PersistanceTest {
@@ -147,10 +147,26 @@ public class PersistanceTest {
 		String sg1String = PersistanceFactory.instance().deflateStatementGraph(sg);
 		StatementGraph sg2 = PersistanceFactory.instance().inflateStatementGraph(sg1String);
 		
-		System.out.println(sg.toViewJSON());
-		System.out.println(sg2.toViewJSON());
-		
 		Assert.assertTrue(sg.equals(sg2));
+	}
+	
+	@Test
+	public void shouldProperlyToViewJSON() throws AtomSetException, IteratorException, ChaseException, HomomorphismException {
+		DefeasibleKnowledgeBase kb = new DefeasibleKnowledgeBase();
+		kb.add("[r1] bird(X), notFly(X) <- penguin(X).\n" + 
+				"[r2] fly(X) <= bird(X).\n" + 
+				"\n" + 
+				"penguin(kowlaski).\n" + 
+				"\n" + 
+				"! :- fly(X), notFly(X).");
+		
+		StatementGraph sg = new StatementGraph(kb, new BDLwithTD(kb.getRulePreferences()));
+		sg.build();
+		sg.groundQuery("notFly(kowlaski).");
+		
+		System.out.println(sg.toViewJSON());
+		Assert.assertTrue(true); // TODO
+		
 	}
 	
 	//TODO unitest for toviewJSON();

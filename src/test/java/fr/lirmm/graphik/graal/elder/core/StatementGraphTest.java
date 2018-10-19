@@ -24,6 +24,7 @@ public class StatementGraphTest {
 		kb.add("fly(X) <= bird(X).");
 		kb.add("notFly(X) <~ brokenWings(X).");
 		kb.add("! :- fly(X), notFly(X).");
+		kb.getNegativeConstraints();
 		sg = new StatementGraph(kb);
 		sg.build();
 	}
