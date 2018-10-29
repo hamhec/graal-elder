@@ -110,7 +110,7 @@ public class SGEdge {
     @SuppressWarnings("unchecked")
     public JSONObject toViewJSON(Statement target) {
     	JSONObject json = new JSONObject();
-    	json.put("id", this.getID(target));
+    	json.put("id", "" + this.getID(target));
     	json.put("source", this.source.getID());
     	json.put("target", target.getID());
 
