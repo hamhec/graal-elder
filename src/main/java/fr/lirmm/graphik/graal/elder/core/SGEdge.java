@@ -56,14 +56,14 @@ public class SGEdge {
         return result;
     }
 	
-	public int getID(Statement target) {
+	public String getID(Statement target) {
 		final int prime = 31;
         int result = 1;
         //result = prime * result + ((this.isAttack) ? 0 : 1);
         result = prime * result + ((this.source == null) ? 0 : this.source.hashCode());
         result = prime * result + ((this.target == null) ? 0 : target.hashCode());
-        
-        return result;
+        // we append 'id' due to HTML no liking ids starting with '-' (if they are negative).
+        return "ID" + result;
 	}
 	
 	/**
@@ -96,8 +96,7 @@ public class SGEdge {
     @SuppressWarnings("unchecked")
     public JSONObject toJSON(Statement targetStatement) {
     	JSONObject json = new JSONObject();
-    	// we append 'id' to avoid negative ids
-    	json.put("id", "id" + this.getID(targetStatement));
+    	json.put("id", this.getID(targetStatement));
     	json.put("source", this.source.getID());
     	// if it is attacking a rule application then we need to store the statement
     	// TODO: explain why do we need that?
@@ -112,8 +111,7 @@ public class SGEdge {
     @SuppressWarnings("unchecked")
     public JSONObject toViewJSON(Statement target) {
     	JSONObject json = new JSONObject();
-    	// we append 'id' due to HTML no liking ids starting with '-' (if they are negative).
-    	json.put("id", "id" + this.getID(target));
+    	json.put("id", this.getID(target));
     	json.put("source", this.source.getID());
     	json.put("target", target.getID());
 

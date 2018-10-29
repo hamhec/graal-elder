@@ -39,7 +39,7 @@
   	<connection>scm:git:https://github.com/hamhec/graal-elder.git</connection>
   	<developerConnection>scm:git:https://github.com/hamhec/graal-elder.git</developerConnection>
   	<url>https://github.com/hamhec/graal-elder.git</url>
-    <tag>graal-elder-1.0.9</tag>
+    <tag>graal-elder-1.0.0</tag>
   </scm>
   
   <distributionManagement>

@@ -52,7 +52,7 @@ public class Statement {
 	}
 	
 	public String getID() {
-		return String.valueOf(this.hashCode());
+		return "ID" + this.hashCode();
 	}
 	
 	public int hashCode() {
@@ -174,7 +174,7 @@ public class Statement {
     @SuppressWarnings("unchecked")
     public JSONObject toViewJSON() {
     	JSONObject json = new JSONObject();
-    	json.put("id", "id" + this.hashCode());
+    	json.put("id", this.getID());
     	json.put("title", this.toString());
     	
     	String type = "";

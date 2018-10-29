@@ -84,8 +84,9 @@ public class PersistanceFactory {
 	public SGEdge inflateEdge(StatementGraph sg, JSONObject edgeJSON) {
 		// Given that HTML does not like negative ids, we added 'id' before each one,
 		// thus these two characters need to be removed for the hash to coincide.
-		String sourceID = ((String) edgeJSON.get("source")).substring(2);
-		String targetID = ((String) edgeJSON.get("target")).substring(2);
+		String sourceID = (String) edgeJSON.get("source");
+		String targetID = ((String) edgeJSON.get("target"));
+		
 		boolean type = (boolean) edgeJSON.get("type");
 		String label = (String) edgeJSON.get("label");
 		
@@ -94,9 +95,6 @@ public class PersistanceFactory {
 		if(null != sg.getPremise(targetID)) { // targetting a premise
 			target = sg.getPremise(targetID);
 		} else { // targetting a rule application
-			if(sg.getStatement(targetID) == null ) {
-				int i = 0;
-			}
 			target = sg.getStatement(targetID).getRuleApplication();
 		}
 		
