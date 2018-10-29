@@ -82,8 +82,10 @@ public class PersistanceFactory {
 	
 	
 	public SGEdge inflateEdge(StatementGraph sg, JSONObject edgeJSON) {
-		String sourceID = (String) edgeJSON.get("source");
-		String targetID = (String) edgeJSON.get("target");
+		// Given that HTML does not like negative ids, we added 'id' before each one,
+		// thus these two characters need to be removed for the hash to coincide.
+		String sourceID = ((String) edgeJSON.get("source")).substring(2);
+		String targetID = ((String) edgeJSON.get("target")).substring(2);
 		boolean type = (boolean) edgeJSON.get("type");
 		String label = (String) edgeJSON.get("label");
 		

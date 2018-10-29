@@ -96,6 +96,8 @@ public class SGEdge {
     @SuppressWarnings("unchecked")
     public JSONObject toJSON(Statement targetStatement) {
     	JSONObject json = new JSONObject();
+    	// we append 'id' to avoid negative ids
+    	json.put("id", "id" + this.getID(targetStatement));
     	json.put("source", this.source.getID());
     	// if it is attacking a rule application then we need to store the statement
     	// TODO: explain why do we need that?
@@ -110,7 +112,8 @@ public class SGEdge {
     @SuppressWarnings("unchecked")
     public JSONObject toViewJSON(Statement target) {
     	JSONObject json = new JSONObject();
-    	json.put("id", "" + this.getID(target));
+    	// we append 'id' due to HTML no liking ids starting with '-' (if they are negative).
+    	json.put("id", "id" + this.getID(target));
     	json.put("source", this.source.getID());
     	json.put("target", target.getID());
 

@@ -174,7 +174,7 @@ public class Statement {
     @SuppressWarnings("unchecked")
     public JSONObject toViewJSON() {
     	JSONObject json = new JSONObject();
-    	json.put("id", "" + this.hashCode());
+    	json.put("id", "id" + this.hashCode());
     	json.put("title", this.toString());
     	
     	String type = "";
