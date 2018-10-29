@@ -56,6 +56,16 @@ public class SGEdge {
         return result;
     }
 	
+	public int getID(Statement target) {
+		final int prime = 31;
+        int result = 1;
+        //result = prime * result + ((this.isAttack) ? 0 : 1);
+        result = prime * result + ((this.source == null) ? 0 : this.source.hashCode());
+        result = prime * result + ((this.target == null) ? 0 : target.hashCode());
+        
+        return result;
+	}
+	
 	/**
      * Verifies if two SGEdges are equivalent or not.
      * @param obj the object to test
@@ -88,6 +98,7 @@ public class SGEdge {
     	JSONObject json = new JSONObject();
     	json.put("source", this.source.getID());
     	// if it is attacking a rule application then we need to store the statement
+    	// TODO: explain why do we need that?
     	String target = (this.targetIsRuleApplication()) ? targetStatement.getID() : this.target.toString();
     	json.put("target", target);
     	json.put("label", this.getLabel());
@@ -99,6 +110,7 @@ public class SGEdge {
     @SuppressWarnings("unchecked")
     public JSONObject toViewJSON(Statement target) {
     	JSONObject json = new JSONObject();
+    	json.put("id", this.getID(target));
     	json.put("source", this.source.getID());
     	json.put("target", target.getID());
 

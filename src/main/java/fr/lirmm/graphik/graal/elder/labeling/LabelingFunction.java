@@ -9,7 +9,7 @@ import fr.lirmm.graphik.graal.elder.preference.PreferenceFunction;
 public abstract class LabelingFunction {
 	
 	public static final String BDLwithTD="BDLwithTD", BDLwithoutTD="BDLwithoutTD",
-			PDLwithTD="BDLwithTD", PDLwithoutTD="PDLwithoutTD";
+			PDLwithTD="PDLwithTD", PDLwithoutTD="PDLwithoutTD";
 	
 	/**
 	 * Labels a permise
