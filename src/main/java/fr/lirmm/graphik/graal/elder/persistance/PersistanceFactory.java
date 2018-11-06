@@ -73,11 +73,12 @@ public class PersistanceFactory {
 	public RuleApplication inflateRuleApplication(StatementGraph sg, JSONObject ra) {
 		if (ra == null) return null;
 		String ruleLabel = (String)ra.get("ruleLabel");
+		String rule = (String)ra.get("rule");
 		String generatedAtom = (String)ra.get("generatedAtom");
 		String title = (String)ra.get("title");
 		String type = (String)ra.get("type");
 		String label = (String)ra.get("label");
-		return new RuleApplication(ruleLabel, generatedAtom, title, type, label);
+		return new RuleApplication(ruleLabel, rule, generatedAtom, title, type, label);
 	}
 	
 	

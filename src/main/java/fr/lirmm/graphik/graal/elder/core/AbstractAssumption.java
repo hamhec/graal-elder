@@ -34,6 +34,7 @@ public abstract class AbstractAssumption implements Assumption {
 			System.err.println("Trying to Add non Attack edge to attackingEdges list");
 			return;
 		}
+		
 		this.attackEdges.add(edge);
 	}
 	

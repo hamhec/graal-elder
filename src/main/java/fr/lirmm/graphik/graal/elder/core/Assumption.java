@@ -1,5 +1,6 @@
 package fr.lirmm.graphik.graal.elder.core;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public interface Assumption {

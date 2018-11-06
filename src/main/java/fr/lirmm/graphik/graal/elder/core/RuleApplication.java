@@ -17,6 +17,7 @@ public class RuleApplication extends AbstractAssumption {
 	static final String STRICT = "strict", DEFEASIBLE = "defeasible", DEFEATER = "defeater", PREFERENCE_RULE = "preference";
 	
 	private String ruleLabel;
+	private String rule;
 	private String type;
 	private String title;
 	private String generatedAtom;
@@ -26,6 +27,7 @@ public class RuleApplication extends AbstractAssumption {
 		String implication = "";
 		this.title = "";
 		this.ruleLabel = rule.getLabel();
+		this.rule = rule.toString(); //TODO implement your own toString on rules
 		this.generatedAtom = generatedAtom.toString();
 		
 		// find the type of the rule
@@ -65,24 +67,60 @@ public class RuleApplication extends AbstractAssumption {
 		this.title = LogicalObjectsFactory.instance().getTOPAtom().toString() + " -> " + this.generatedAtom;
 		this.type = STRICT;
 		this.ruleLabel = "";
+		this.rule = this.title;
 	}
 	
-	public RuleApplication(String ruleLabel, String generatedAtom, String title, String type, String label) {
+	public RuleApplication(String ruleLabel, String rule, String generatedAtom, String title, String type, String label) {
 		this.ruleLabel = ruleLabel;
+		this.rule = rule;
 		this.generatedAtom = generatedAtom;
 		this.title = title;
 		this.type = type;
 		this.setLabel(label);
 	}
 	
-	public String getGeneratedAtom() {
-		return this.generatedAtom;
-	}
+	
 	
 	public String getRuleLabel() {
-		return this.ruleLabel;
+		return ruleLabel;
 	}
-	
+
+	public void setRuleLabel(String ruleLabel) {
+		this.ruleLabel = ruleLabel;
+	}
+
+	public String getRule() {
+		return rule;
+	}
+
+	public void setRule(String rule) {
+		this.rule = rule;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getGeneratedAtom() {
+		return generatedAtom;
+	}
+
+	public void setGeneratedAtom(String generatedAtom) {
+		this.generatedAtom = generatedAtom;
+	}
+
 	public boolean isDefeater() {
 		return (this.type.equals(DEFEATER));
 	}
@@ -118,10 +156,36 @@ public class RuleApplication extends AbstractAssumption {
         
         RuleApplication other = (RuleApplication) obj;
         // They must have the same label
-        if (!this.ruleLabel.equals(other.ruleLabel)) return false;
+        //if (!this.ruleLabel.equals(other.ruleLabel)) return false;
         // They must have the same title
-        // TODO error prone! the order of the body atoms might change
-        if (!this.title.equals(other.title)) return false;
+
+        if(!other.getType().equals(this.type)) return false;
+        String spliter = "";
+        if(this.type.equals(STRICT) || this.type.equals(PREFERENCE_RULE)) {
+        	spliter = "->";
+        } else if (this.type.equals(DEFEASIBLE)) {
+        	spliter = "=>";
+        } else {
+        	spliter = "~>";
+        }
+        
+        String otherTitle = other.getTitle().replace('.', ' ').trim();
+        String[] otherBH = otherTitle.split(spliter);
+        String[] otherB = otherBH[0].split(",");
+        String[] otherH = otherBH[1].split(",");
+        
+        String title = this.getTitle().replace('.', ' ').trim();
+        String[] meBH = title.split(spliter);
+        String[] meB = meBH[0].split(",");
+        String[] meH = meBH[1].split(",");
+        
+        
+        // Test body is same
+        if(!this.contains(meB, otherB)) return false;
+        if(!this.contains(otherB, meB)) return false;
+        // Test head is same
+        if(!this.contains(meH, otherH)) return false;
+        if(!this.contains(otherH, meH)) return false;
         
         return true;
     }
@@ -134,8 +198,28 @@ public class RuleApplication extends AbstractAssumption {
     	json.put("title", this.title);
     	json.put("type", this.type);
     	json.put("ruleLabel", this.ruleLabel);
+    	json.put("rule", this.rule);
     	json.put("label", this.getLabel());
     	
+    	
     	return json;
+    }
+    
+    private boolean contains(String[] child, String[] parent) {
+    	for(int i = 0; i < child.length; i++) {
+        	boolean exists = false;
+        	String a = child[i].trim();
+        	for(int j = 0; j < parent.length; j++) {
+        		String b = parent[j].trim();
+        		if(b.equals(a)) {
+        			exists = true;
+        			break;
+        		}
+        	}
+        	if(!exists) {
+        		return false;
+        	}
+        }
+    	return true;
     }
 }

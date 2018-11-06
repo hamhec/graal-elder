@@ -378,7 +378,7 @@ public class StatementGraph {
 
 		InMemoryAtomSet head = new LinkedListAtomSet();
 		head.add(TOPatom);
-		RuleApplication ruleApplication = new RuleApplication(new StrictRule("", null, head),
+		RuleApplication ruleApplication = new RuleApplication(new StrictRule("", new LinkedListAtomSet(), head),
 				null, TOPatom);
 		
 		this.topStatement = new Statement(ruleApplication, null);

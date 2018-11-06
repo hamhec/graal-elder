@@ -1,7 +1,5 @@
 package fr.lirmm.graphik.graal.elder.core;
 
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
