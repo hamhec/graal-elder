@@ -7,7 +7,7 @@ import org.json.simple.JSONObject;
  * @author abidech
  * A Permise should be unique for each Atom. It encapsulates the Atom's label.
  */
-public class Premise extends AbstractAssumption {
+public class Premise extends AbstractAssumption implements Comparable<Premise> {
 	private String atom;
 
 	public Premise(String atom) {
@@ -59,4 +59,9 @@ public class Premise extends AbstractAssumption {
     	
     	return json;
     }
+
+	@Override
+	public int compareTo(Premise o) {
+		return this.atom.compareTo(o.getAtom());
+	}
 }

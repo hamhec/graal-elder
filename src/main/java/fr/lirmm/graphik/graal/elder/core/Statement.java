@@ -1,5 +1,6 @@
 package fr.lirmm.graphik.graal.elder.core;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,6 +20,9 @@ public class Statement {
 	public Statement(RuleApplication ruleApplication, List<Premise> premises) {
 		this.ruleApplication = ruleApplication;
 		this.premises = premises;
+		if(null != this.premises) {
+			Collections.sort(this.premises);
+		}
 		this.label = null;
 	}
 	

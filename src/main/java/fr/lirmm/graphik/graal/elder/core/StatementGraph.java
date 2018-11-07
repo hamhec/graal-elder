@@ -356,6 +356,10 @@ public class StatementGraph {
 	// PRIVATE METHODS
 	// ------------------------------------------------------------------------
 	private void addStatement(Statement statement) {
+		// This test solves the bug where when two equal statements exist, one is labeled and lost, 
+		//and the other one is not labeled and is stored.
+		if(this.statements.containsKey(statement.getID())) return;
+		
 		this.statements.put(statement.getID(), statement);
 		// Add the link between the statement and the atom it supports.
 		if(null == statement.getRuleApplication()) return;

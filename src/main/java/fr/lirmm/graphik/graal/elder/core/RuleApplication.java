@@ -1,5 +1,9 @@
 package fr.lirmm.graphik.graal.elder.core;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.json.simple.JSONObject;
 
 import fr.lirmm.graphik.graal.api.core.Atom;
@@ -45,18 +49,16 @@ public class RuleApplication extends AbstractAssumption {
 			implication = "->";
 		}
 		if(null != instantiatedBody) {
-			// create a string representation of this rule application
+			// sort the body
+			List<String> body = new LinkedList<String>();
 			CloseableIterator<Atom> it = instantiatedBody.iterator();
-			
 			try {
-				if(it.hasNext()) this.title += it.next().toString();
-			
-				while(it.hasNext()) {
-					this.title += ", " + it.next().toString();
-				}
-			} catch (IteratorException e) {
-				e.printStackTrace();
+				while(it.hasNext()) { body.add(it.next().toString()); }
+			} catch (IteratorException e1) {
+				e1.printStackTrace();
 			}
+			Collections.sort(body);
+			this.title += String.join(",", body);
 		}
 		this.title += " " + implication + " ";
 		this.title += generatedAtom;
