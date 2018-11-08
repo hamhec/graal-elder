@@ -10,7 +10,7 @@ import fr.lirmm.graphik.graal.elder.core.SGEdge;
 import fr.lirmm.graphik.graal.elder.labeling.Labels;
 import fr.lirmm.graphik.graal.elder.preference.PreferenceFunction;
 
-public class DefeasibleLogicLabelingHelper {
+public class LabelingHelper {
 	/**
 	 * Indicates if this attack should be considered as it is ambiguity blocking
 	 * @param attack the SGEdge attack
@@ -44,19 +44,30 @@ public class DefeasibleLogicLabelingHelper {
 			premise.setLabel(Labels.ASSUMED_OUT);
 			return premise.getLabel();
 		}
-						
+		
 		// List of attacks that are challenged but not defeated
 		LinkedList<SGEdge> counteredAttacks = new LinkedList<SGEdge>();
 		Iterator<SGEdge> itSurvivingAttacks = survivingAttacks.iterator();
 		// Filter ambig attacks from In attacks
-				while(itSurvivingAttacks.hasNext()) {
-					SGEdge surviving = itSurvivingAttacks.next();
-					if(isAmbiguous(surviving.getLabel())) {
-						counteredAttacks.add(surviving); // add it to surviving ambig attacks
-						itSurvivingAttacks.remove(); // remove it from surviving In attacks
-					}
-				}
+		while(itSurvivingAttacks.hasNext()) {
+			SGEdge surviving = itSurvivingAttacks.next();
+			if(isAmbiguous(surviving.getLabel())) {
+				counteredAttacks.add(surviving); // add it to surviving ambig attacks
+				itSurvivingAttacks.remove(); // remove it from surviving In attacks
+			}
+		}
 		
+		// make sure that we only keep surviving supports that don't get killed by INdef attacks
+		Iterator<SGEdge> itSurvivingSupports = survivingSupports.iterator();
+		while(itSurvivingSupports.hasNext()) {
+			SGEdge support = itSurvivingSupports.next();
+			for(SGEdge attack: survivingAttacks) {
+				Status pref = preferenceFunction.preferenceStatus(attack, support);
+				if(pref == Status.SUPERIOR) {
+					itSurvivingSupports.remove();
+				}
+			}
+		}
 		
 		// Check if In supports can kill any attack
 		for(SGEdge support: survivingSupports) {
@@ -86,7 +97,7 @@ public class DefeasibleLogicLabelingHelper {
 				}
 				
 			} else if(isAmbiguous(support.getLabel())) { // redundant test, but just to make sure the support is ambig
-				// Does this support any surviving Defeasible In attack?
+				// Does this support counter any surviving Defeasible In attack?
 				itSurvivingAttacks = survivingAttacks.iterator();
 				while(itSurvivingAttacks.hasNext()) {
 					surviving = itSurvivingAttacks.next();
@@ -134,65 +145,51 @@ public class DefeasibleLogicLabelingHelper {
 			return premise.getLabel();
 		}
 		
-		// List of IN support that are challenged but not defeated
-		LinkedList<SGEdge> ambigSupports = new LinkedList<SGEdge>();
+		// Filter support that cannot defend themselves
+		LinkedList<SGEdge> counteredSupports = new LinkedList<SGEdge>();
 		Iterator<SGEdge> itSurvivingSup = survivingSupports.iterator();
-		// Filter ambig supports from surviving supports
 		while(itSurvivingSup.hasNext()) {
-			SGEdge surviving = itSurvivingSup.next();
-			if(isAmbiguous(surviving.getLabel())) {
-				ambigSupports.add(surviving); // add it to surviving ambig supports
-				itSurvivingSup.remove(); // remove it from surviving supports
-			}
-		}
-		
-		for(SGEdge attack: survivingAttacks) {
-			Status pref = null; // preference status in order not to declare it twice
-			SGEdge surviving = null; // in order not to declare it twice
-			
-			if(isDefeasibleIn(attack.getLabel())) {
-				// Does this attack kill any ambig support?
-				Iterator<SGEdge> itAmbigSup = ambigSupports.iterator();
-				while(itAmbigSup.hasNext()) {
-					surviving = itAmbigSup.next();
-					pref = preferenceFunction.preferenceStatus(surviving, attack);
-					if(pref == Status.INFERIOR) itAmbigSup.remove();
-				}
-				
-				// Does this attack kill or 'counter' any surviving Defeasible In support?
-				itSurvivingSup = survivingSupports.iterator();
-				while(itSurvivingSup.hasNext()) {
-					surviving = itSurvivingSup.next();
-					pref = preferenceFunction.preferenceStatus(surviving, attack);
-					if(pref == Status.INFERIOR) { // support rule is inferior to attack rule
-						itSurvivingSup.remove(); // this support is killed
-					} else if (pref == Status.EQUAL) { // support has been countered (challenged but not defeated)
-						ambigSupports.add(surviving); // add it to ambig supports
-						itSurvivingSup.remove(); // remove it from surviving supports
-					}
-				}
-			} else if(isAmbiguous(attack.getLabel())) { // redundant test, but just to make sure
-				// Does this attack kill 'counter' any surviving Defeasible In support?
-				itSurvivingSup = survivingSupports.iterator();
-				while(itSurvivingSup.hasNext()) {
-					surviving = itSurvivingSup.next();
-					pref = preferenceFunction.preferenceStatus(surviving, attack);
-					if(pref != Status.SUPERIOR) { // support is not superior to ambig attack
-						ambigSupports.add(surviving); // add it to ambig supports
-						itSurvivingSup.remove(); // remove it from surviving supports
-					}
+			SGEdge support = itSurvivingSup.next();
+			for(SGEdge attack: survivingAttacks) {
+				Status pref = preferenceFunction.preferenceStatus(support, attack);
+				if(pref != Status.SUPERIOR) {
+					counteredSupports.add(support);
+					itSurvivingSup.remove();
+					break;
 				}
 			}
 		}
 		
-		if(!survivingSupports.isEmpty()) { // there is a surviving In support
-			premise.setLabel(Labels.DEFEASIBLE_IN);
-			return premise.getLabel();
-		} else if(!ambigSupports.isEmpty()) { // no surviving In but there is ambig that survives
+		// If there is a support that defends itself from all attacks
+		if(!survivingSupports.isEmpty()) {
+			for(SGEdge sup: survivingSupports) {
+				if(isDefeasibleIn(sup.getLabel())) { // If there is an INDef support that defends itself from all attacks
+					premise.setLabel(Labels.DEFEASIBLE_IN);
+					return premise.getLabel();
+				}
+			} // Only ambig defend itself from all attacks
 			premise.setLabel(Labels.AMBIGUOUS);
 			return premise.getLabel();
-		} else { // no surviving In or Ambig
+		}
+		
+		// Filter support that cannot defend themselves
+		Iterator<SGEdge> itSurvivingAtt = survivingAttacks.iterator();
+		while(itSurvivingAtt.hasNext()) {
+			SGEdge attack = itSurvivingAtt.next();
+			for(SGEdge support: counteredSupports) {
+				Status pref = preferenceFunction.preferenceStatus(attack, support);
+				if(pref != Status.SUPERIOR) {
+					itSurvivingAtt.remove();
+					break;
+				}
+			}
+		}
+		
+		if(!survivingAttacks.isEmpty()) {
 			premise.setLabel(Labels.DEFEASIBLE_OUT);
+			return premise.getLabel();
+		} else {
+			premise.setLabel(Labels.AMBIGUOUS);
 			return premise.getLabel();
 		}
 	}

@@ -36,12 +36,12 @@ public class PDLwithTD extends AbstractDefeasibleLogicLabelingFunction {
 	}
 	
 	public boolean shouldAttackBeConsidered(SGEdge attack) {
-		return DefeasibleLogicLabelingHelper.ambiguityPropagating(attack);
+		return LabelingHelper.ambiguityPropagating(attack);
 	}
 	
 	
 	public String handleSurvivingSupportsAndAttacks(Premise premise, List<SGEdge> survivingSupports, List<SGEdge> survivingAttacks) {
-		return DefeasibleLogicLabelingHelper.withTeamDefeat(premise, 
+		return LabelingHelper.withTeamDefeat(premise, 
 				survivingSupports, survivingAttacks, this.getPreferenceFunction());
 	}
 	

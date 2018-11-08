@@ -27,12 +27,12 @@ public class BDLwithTD extends AbstractDefeasibleLogicLabelingFunction {
 	}
 	
 	public boolean shouldAttackBeConsidered(SGEdge attack) {
-		return DefeasibleLogicLabelingHelper.ambiguityBlocking(attack);
+		return LabelingHelper.ambiguityBlocking(attack);
 	}
 	
 	
 	public String handleSurvivingSupportsAndAttacks(Premise premise, List<SGEdge> survivingSupports, List<SGEdge> survivingAttacks) {
-		return DefeasibleLogicLabelingHelper.withTeamDefeat(premise, 
+		return LabelingHelper.withTeamDefeat(premise, 
 				survivingSupports, survivingAttacks, this.getPreferenceFunction());
 	}
 	

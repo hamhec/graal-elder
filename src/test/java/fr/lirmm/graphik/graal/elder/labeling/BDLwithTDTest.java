@@ -180,13 +180,17 @@ public class BDLwithTDTest extends KnowledgeBaseForLabelingTesting {
 	// 	TEAM DEFEAT BEHAVIOR TEST
 	// ------------------------------------------------------------------------
 	@Test
-	public void shouldBeWithTeamDefeat() throws IteratorException, AtomSetException {
-		String query = "buy(phone).";
-		String label = sg.groundQuery(query);
+	public void shouldBeInWithTeamDefeat() throws IteratorException, AtomSetException {
+		String label = sg.groundQuery("buy(phone).");
 		
 		Assert.assertEquals(Labels.DEFEASIBLE_IN, label);
 	}
-	
+	@Test
+	public void shouldBeOutWithTeamDefeat() throws IteratorException, AtomSetException {
+		String label = sg.groundQuery("notBuy(phone).");
+		
+		Assert.assertEquals(Labels.DEFEASIBLE_OUT, label);
+	}
 	// ------------------------------------------------------------------------
 	// 	AMBIGUITY WITH TEAM DEFEAT BEHAVIOR TEST
 	// ------------------------------------------------------------------------

@@ -180,8 +180,16 @@ public class BDLwithoutTDTest extends KnowledgeBaseForLabelingTesting {
 	// 	TEAM DEFEAT BEHAVIOR TEST
 	// ------------------------------------------------------------------------
 	@Test
-	public void shouldBeWithoutTeamDefeat() throws IteratorException, AtomSetException {
+	public void shouldBeAmbiguousWithoutTeamDefeat() throws IteratorException, AtomSetException {
 		String query = "buy(phone).";
+		String label = sg.groundQuery(query);
+		
+		Assert.assertEquals(Labels.AMBIGUOUS, label);
+	}
+	
+	@Test
+	public void shouldBeAmbiguousTooWithoutTeamDefeat() throws IteratorException, AtomSetException {
+		String query = "notBuy(phone).";
 		String label = sg.groundQuery(query);
 		
 		Assert.assertEquals(Labels.AMBIGUOUS, label);

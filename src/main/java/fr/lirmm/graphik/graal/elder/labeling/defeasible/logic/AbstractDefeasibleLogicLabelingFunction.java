@@ -84,14 +84,14 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 			if(!shouldAttackBeConsidered(attack)) continue;
 			
 			
-			if(DefeasibleLogicLabelingHelper.isStrictIn(attack.getLabel())) { // Attacked by a Strict In
+			if(LabelingHelper.isStrictIn(attack.getLabel())) { // Attacked by a Strict In
 				ruleApplication.setLabel(Labels.STRICT_OUT); // STRICT_OUT
 				return ruleApplication.getLabel();
 			} else { // attacked by defeasible In 
 				Status prefStatus = this.preferenceFunction.preferenceStatus(ruleApplication, attack);
 				
 				if(prefStatus == Status.INFERIOR) { // This attacks kills the rule application
-					if(DefeasibleLogicLabelingHelper.isDefeasibleIn(attack.getLabel())) {
+					if(LabelingHelper.isDefeasibleIn(attack.getLabel())) {
 						ruleApplication.setLabel(Labels.DEFEASIBLE_OUT);
 						return ruleApplication.getLabel();
 					}
@@ -124,12 +124,12 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 			// If the support has no label, then compute it.
 			if(support.getLabel() == null) this.label(support);
 			
-			if(DefeasibleLogicLabelingHelper.isStrictIn(support.getLabel())) { 
+			if(LabelingHelper.isStrictIn(support.getLabel())) { 
 				// If the support is STRICT IN then label the assumption STRICT_IN.
 				premise.setLabel(Labels.STRICT_IN);
 				return premise.getLabel(); // there is no need to check the rest.
-			} else if(DefeasibleLogicLabelingHelper.isDefeasibleIn(support.getLabel()) || 
-					DefeasibleLogicLabelingHelper.isAmbiguous(support.getLabel())) { 
+			} else if(LabelingHelper.isDefeasibleIn(support.getLabel()) || 
+					LabelingHelper.isAmbiguous(support.getLabel())) { 
 				// If the support is defeasible In or ambiguous then add it
 				survivingSupports.add(support);
 			}
@@ -147,7 +147,7 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 			// if this attack is not a strict in or a defeasible in then do not consider it
 			if(!shouldAttackBeConsidered(attack)) continue;
 			
-			if(DefeasibleLogicLabelingHelper.isStrictIn(attack.getLabel())) { // Attacked by a Strict In
+			if(LabelingHelper.isStrictIn(attack.getLabel())) { // Attacked by a Strict In
 				premise.setLabel(Labels.STRICT_OUT); // STRICT_OUT
 				return premise.getLabel(); // No need to check other attacks
 			} else { // DefeasibleIN support vs defeasibleIn attack
@@ -171,16 +171,16 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 		// Find the label for the premises
 		for(Premise prem: statement.getPremises()) {
 			this.label(prem);
-			if(DefeasibleLogicLabelingHelper.isStrictOut(prem.getLabel())) { // If a premise is strictOut then the statement is strict Out
+			if(LabelingHelper.isStrictOut(prem.getLabel())) { // If a premise is strictOut then the statement is strict Out
 				statement.setLabel(Labels.STRICT_OUT);
 				return statement.getLabel();
-			} else if(DefeasibleLogicLabelingHelper.isDefeasibleOut(prem.getLabel())) {
+			} else if(LabelingHelper.isDefeasibleOut(prem.getLabel())) {
 				defeasibleOut = true;
-			} else if(DefeasibleLogicLabelingHelper.isAmbiguous(prem.getLabel())) {
+			} else if(LabelingHelper.isAmbiguous(prem.getLabel())) {
 				ambiguous = true;
-			} else if(DefeasibleLogicLabelingHelper.isDefeasibleIn(prem.getLabel())) {
+			} else if(LabelingHelper.isDefeasibleIn(prem.getLabel())) {
 				defeasibleIn = true;
-			} else if(DefeasibleLogicLabelingHelper.isUnsupported(prem.getLabel())) {
+			} else if(LabelingHelper.isUnsupported(prem.getLabel())) {
 				unsupported = true;
 			}
 		}
@@ -202,12 +202,12 @@ public abstract class AbstractDefeasibleLogicLabelingFunction extends LabelingFu
 			if(null == statement.getRuleApplication().getLabel())
 				this.label(statement.getRuleApplication());
 			
-			if(DefeasibleLogicLabelingHelper.isDefeasibleOut(statement.getRuleApplication().getLabel())) { // if the rule application is out then all is out
+			if(LabelingHelper.isDefeasibleOut(statement.getRuleApplication().getLabel())) { // if the rule application is out then all is out
 				statement.setLabel(Labels.DEFEASIBLE_OUT);
 				return statement.getLabel();
-			} else if(DefeasibleLogicLabelingHelper.isAmbiguous(statement.getRuleApplication().getLabel())) {
+			} else if(LabelingHelper.isAmbiguous(statement.getRuleApplication().getLabel())) {
 				ruleIsAmbiguous = true;
-			} else if(DefeasibleLogicLabelingHelper.isDefeasibleIn(statement.getRuleApplication().getLabel())) {
+			} else if(LabelingHelper.isDefeasibleIn(statement.getRuleApplication().getLabel())) {
 				ruleIsDefeasibleIn = true;
 			}
 		} 
