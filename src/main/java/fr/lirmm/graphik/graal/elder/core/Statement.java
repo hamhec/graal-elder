@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
+import fr.lirmm.graphik.graal.elder.labeling.Labels;
+import fr.lirmm.graphik.graal.elder.persistance.PremiseJSONRepresentation;
+import fr.lirmm.graphik.graal.elder.persistance.StatementJSONRepresentation;
 
 public class Statement {
 	
@@ -149,37 +149,33 @@ public class Statement {
     	return edges;
     }
     
-    @SuppressWarnings("unchecked")
-    public JSONObject toJSON() {
-    	JSONObject json = new JSONObject();
+    public StatementJSONRepresentation getRepresentation() {
+    	StatementJSONRepresentation rep = new StatementJSONRepresentation();
     	// Add the rule application JSONObject
     	if(null == this.getRuleApplication()) {
-    		json.put("ruleApplication", null);
+    		rep.setRuleApplication(null);
     	} else {
-    		json.put("ruleApplication", this.getRuleApplication().toJSON());
+    		rep.setRuleApplication(this.ruleApplication.getRepresentation());
     	}
     	// Add the premises
     	if(null == this.getPremises()) {
-    		json.put("premises", null);
+    		rep.setPremises(null);
     	} else {
-	    	JSONArray premises = new JSONArray();
+    		
+	    	List<PremiseJSONRepresentation> premises = new LinkedList<PremiseJSONRepresentation>();
 	    	for(Premise p: this.getPremises()) {
-	    		premises.add(p.toJSON());
+	    		premises.add(p.getRepresentation());
 	    	}
-	    	json.put("premises", premises);
+	    	rep.setPremises(premises);
     	}
     	
     	// Add label
-    	json.put("label", this.getLabel());
+    	rep.setLabel(this.getLabel());
+    	rep.setLabelString(Labels.toPrettyString(this.getLabel()));
     	
-    	return json;
-    }
-    
-    @SuppressWarnings("unchecked")
-    public JSONObject toViewJSON() {
-    	JSONObject json = new JSONObject();
-    	json.put("id", this.getID());
-    	json.put("title", this.toString());
+    	// Display information
+    	rep.setId(this.getID());
+    	rep.setTitle(this.toString());
     	
     	String type = "";
     	if(this.isFactStatement()) {
@@ -189,11 +185,8 @@ public class Statement {
     	} else {
     		type = "statement";
     	}
-    	json.put("type", type);
-    	// Add label
-    	String label = (this.getLabel() != null) ? this.getLabel() : "";
-    	json.put("label", label);
+    	rep.setType(type);
     	
-    	return json;
+    	return rep;
     }
 }

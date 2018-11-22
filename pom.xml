@@ -15,6 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <graal.defeasible.core.version>0.0.4</graal.defeasible.core.version>
     <jdk.version>1.8</jdk.version>
+    <jackson.version>2.9.7</jackson.version>
   </properties>
 	
   <licenses>
@@ -167,9 +168,21 @@
     </dependency>
     
     <dependency>
-        <groupId>com.googlecode.json-simple</groupId>
-        <artifactId>json-simple</artifactId>
-        <version>1.1.1</version>
-    </dependency>
+	  <groupId>com.fasterxml.jackson.core</groupId>
+	  <artifactId>jackson-core</artifactId>
+	  <version>${jackson.version}</version>
+	</dependency>
+	
+	<dependency>
+	  <groupId>com.fasterxml.jackson.core</groupId>
+	  <artifactId>jackson-annotations</artifactId>
+	  <version>${jackson.version}</version>
+	</dependency>
+	
+	<dependency>
+	  <groupId>com.fasterxml.jackson.core</groupId>
+	  <artifactId>jackson-databind</artifactId>
+	  <version>${jackson.version}</version>
+	</dependency>
   </dependencies>
 </project>

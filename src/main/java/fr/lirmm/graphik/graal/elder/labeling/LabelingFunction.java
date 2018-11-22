@@ -45,4 +45,5 @@ public abstract class LabelingFunction {
 	 * @return the preference function used by the labeling
 	 */
 	public abstract PreferenceFunction getPreferenceFunction();
+	
 }

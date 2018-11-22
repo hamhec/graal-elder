@@ -1,12 +1,17 @@
 package fr.lirmm.graphik.graal.elder.persistance;
 
-import org.json.simple.parser.ParseException;
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
 import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
+import fr.lirmm.graphik.graal.api.io.ParseException;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.elder.core.StatementGraph;
 import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithTD;
@@ -15,7 +20,7 @@ import fr.lirmm.graphik.util.stream.IteratorException;
 public class PersistanceTest {
 		
 	@Test
-	public void shouldDeflateAndInflateTheSameSGWithoutLabels() throws AtomSetException, IteratorException, ChaseException, HomomorphismException, ParseException {	
+	public void shouldDeflateAndInflateTheSameSGWithoutLabels() throws AtomSetException, ChaseException, HomomorphismException, JsonParseException, JsonMappingException, IOException {	
 		DefeasibleKnowledgeBase kb = new DefeasibleKnowledgeBase();
 		kb = new DefeasibleKnowledgeBase();
 		
@@ -83,7 +88,7 @@ public class PersistanceTest {
 	}
 	
 	@Test
-	public void shouldDeflateAndInflateTheSameSGWithLabels() throws AtomSetException, IteratorException, ChaseException, HomomorphismException, ParseException {	
+	public void shouldDeflateAndInflateTheSameSGWithLabels() throws AtomSetException, ChaseException, HomomorphismException, JsonParseException, JsonMappingException, IOException {	
 		DefeasibleKnowledgeBase kb = new DefeasibleKnowledgeBase();
 		kb = new DefeasibleKnowledgeBase();
 		
@@ -164,7 +169,7 @@ public class PersistanceTest {
 		sg.build();
 		sg.groundQuery("notFly(kowlaski).");
 		
-		System.out.println(sg.toViewJSON());
+		System.out.println(sg.toJSONString());
 		Assert.assertTrue(true); // TODO
 		
 	}

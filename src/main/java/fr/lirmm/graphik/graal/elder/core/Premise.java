@@ -1,6 +1,7 @@
 package fr.lirmm.graphik.graal.elder.core;
 
-import org.json.simple.JSONObject;
+import fr.lirmm.graphik.graal.elder.labeling.Labels;
+import fr.lirmm.graphik.graal.elder.persistance.PremiseJSONRepresentation;
 
 /**
  * 
@@ -51,13 +52,13 @@ public class Premise extends AbstractAssumption implements Comparable<Premise> {
     }
     
     
-    @SuppressWarnings("unchecked")
-    public JSONObject toJSON() {
-    	JSONObject json = new JSONObject();
-    	json.put("atom", this.atom);
-    	json.put("label", this.getLabel());
+    public PremiseJSONRepresentation getRepresentation() {
+    	PremiseJSONRepresentation rep = new PremiseJSONRepresentation();
+    	rep.setAtom(this.atom);
+    	rep.setLabel(this.getLabel());
+    	rep.setLabelString(Labels.toPrettyString(this.getLabel()));
     	
-    	return json;
+    	return rep;
     }
 
 	@Override

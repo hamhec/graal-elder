@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.json.simple.JSONObject;
-
 import fr.lirmm.graphik.graal.api.core.Atom;
 import fr.lirmm.graphik.graal.api.core.AtomSet;
 import fr.lirmm.graphik.graal.api.core.Rule;
@@ -13,6 +11,8 @@ import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
 import fr.lirmm.graphik.graal.defeasible.core.rules.DefeasibleRule;
 import fr.lirmm.graphik.graal.defeasible.core.rules.DefeaterRule;
 import fr.lirmm.graphik.graal.defeasible.core.rules.PreferenceRule;
+import fr.lirmm.graphik.graal.elder.labeling.Labels;
+import fr.lirmm.graphik.graal.elder.persistance.RuleApplicationJSONRepresentation;
 import fr.lirmm.graphik.util.stream.CloseableIterator;
 import fr.lirmm.graphik.util.stream.IteratorException;
 
@@ -193,18 +193,17 @@ public class RuleApplication extends AbstractAssumption {
     }
     
     
-    @SuppressWarnings("unchecked")
-    public JSONObject toJSON() {
-    	JSONObject json = new JSONObject();
-    	json.put("generatedAtom", this.generatedAtom);
-    	json.put("title", this.title);
-    	json.put("type", this.type);
-    	json.put("ruleLabel", this.ruleLabel);
-    	json.put("rule", this.rule);
-    	json.put("label", this.getLabel());
+    public RuleApplicationJSONRepresentation getRepresentation() {
+    	RuleApplicationJSONRepresentation rep = new RuleApplicationJSONRepresentation();
+    	rep.setGeneratedAtom(this.generatedAtom);
+    	rep.setTitle(this.title);
+    	rep.setType(this.type);
+    	rep.setRule(this.rule);
+    	rep.setRuleLabel(this.ruleLabel);
+    	rep.setLabel(this.getLabel());
+    	rep.setLabelString(Labels.toPrettyString(this.getLabel()));
     	
-    	
-    	return json;
+    	return rep;
     }
     
     private boolean contains(String[] child, String[] parent) {

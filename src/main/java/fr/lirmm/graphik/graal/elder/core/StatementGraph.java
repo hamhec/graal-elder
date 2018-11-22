@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.lirmm.graphik.graal.api.core.Atom;
 import fr.lirmm.graphik.graal.api.core.AtomSet;
@@ -35,6 +35,9 @@ import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithTD;
 import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.BDLwithoutTD;
 import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.PDLwithTD;
 import fr.lirmm.graphik.graal.elder.labeling.defeasible.logic.PDLwithoutTD;
+import fr.lirmm.graphik.graal.elder.persistance.SGEdgeJSONRepresentation;
+import fr.lirmm.graphik.graal.elder.persistance.StatementGraphJSONRepresentation;
+import fr.lirmm.graphik.graal.elder.persistance.StatementJSONRepresentation;
 import fr.lirmm.graphik.graal.elder.reasoning.SGRuleApplicationHandler;
 import fr.lirmm.graphik.graal.homomorphism.SmartHomomorphism;
 import fr.lirmm.graphik.util.stream.CloseableIterator;
@@ -447,7 +450,7 @@ public class StatementGraph {
 		if(statements != null) {
 			for(Statement s : statements) {
 				if(!s.getRuleApplication().isDefeater()) {
-					SGEdge edge = new SGEdge(s, prem, false);
+					SGEdge edge = new SGEdge(s, prem, SGEdge.SUPPORT);
 					prem.addSupportEdge(edge);
 				}
 			}
@@ -527,13 +530,13 @@ public class StatementGraph {
 		
 		for(Statement s: statementsAgainstPremise) {
 			if(!s.getRuleApplication().isDefeater()) { // If not a defeater then it attacks the premise
-				SGEdge edge = new SGEdge(s, prem, true);
+				SGEdge edge = new SGEdge(s, prem, SGEdge.ATTACK);
 				prem.addAttackEdge(edge);
 				conflicts.add(s.getRuleApplication().getGeneratedAtom());
 			} else { // It is a defeater, it must attack the rule application
 				if(statementsForPremise == null) continue;
 				for(Statement sForPremise: statementsForPremise) {
-					SGEdge edge = new SGEdge(s, sForPremise.getRuleApplication(), true);
+					SGEdge edge = new SGEdge(s, sForPremise.getRuleApplication(), SGEdge.ATTACK);
 					sForPremise.getRuleApplication().addAttackEdge(edge);
 				}
 			}
@@ -576,70 +579,54 @@ public class StatementGraph {
     }
 	
 	
-	@SuppressWarnings("unchecked")
-	public JSONObject toJSON() {
-		JSONObject json = new JSONObject();
+	public StatementGraphJSONRepresentation getRepresentation() {
+		StatementGraphJSONRepresentation rep = new StatementGraphJSONRepresentation();
 		
 		// All statements and edges to JSON
     	Collection<Statement> statementsList = this.statements.values();
     	Collection<Statement> queryList = this.statementsOfQueries.values();
     	
-    	JSONArray edgesJSON = new JSONArray();
-    	JSONArray statementsJSON = new JSONArray();
-		JSONArray queryStatementsJSON = new JSONArray();
-    	JSONArray rulePreferencesJSON = new JSONArray();
+    	List<StatementJSONRepresentation> statementsRep = new LinkedList<StatementJSONRepresentation>();
+    	List<StatementJSONRepresentation> queryStatementsRep = new LinkedList<StatementJSONRepresentation>();
+    	List<SGEdgeJSONRepresentation> edgesRep = new LinkedList<SGEdgeJSONRepresentation>();
+    	List<String> rulePreferencesRep = new LinkedList<String>();
     	
     	for(Statement s: statementsList) {
-    		statementsJSON.add(s.toJSON());
+    		statementsRep.add(s.getRepresentation());
     		for(SGEdge e: s.getIncomingEdges()) {
-    			edgesJSON.add(e.toJSON(s));
+    			edgesRep.add(e.getRepresentation(s));
     		}
     	}
     	
     	for(Statement s: queryList) {
-    		queryStatementsJSON.add(s.toJSON());
+    		queryStatementsRep.add(s.getRepresentation());
     		for(SGEdge e: s.getIncomingEdges()) {
-    			edgesJSON.add(e.toJSON(s));
+    			edgesRep.add(e.getRepresentation(s));
     		}
     	}
     	
     	
     	// Adding Preferences
     	for(Preference pref: this.getKB().getRulePreferences().values()) {
-    		rulePreferencesJSON.add(pref.toString());
+    		rulePreferencesRep.add(pref.toString());
     	}
     	
-    	json.put("statements", statementsJSON);
-    	json.put("edges", edgesJSON);
-    	json.put("rulePreferences", rulePreferencesJSON);
-    	json.put("queryStatements", queryStatementsJSON);
+    	rep.setStatements(statementsRep);
+    	rep.setEdges(edgesRep);
+    	rep.setQueryStatements(queryStatementsRep);
+    	rep.setRulePreferences(rulePreferencesRep);
     	
-		return json;
+		return rep;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public String toViewJSON() {
-    	JSONObject json = new JSONObject();
-    	
-    	// All statements to JSON
-    	List<Statement> statementsList = this.getAllStatements();
-
-    	JSONArray edges = new JSONArray();
-    	JSONArray statementsJSON = new JSONArray();
-    	
-    	for(Statement s: statementsList) {
-    		// add statement to json string list
-    		statementsJSON.add(s.toViewJSON());
-    		
-    		for(SGEdge e: s.getIncomingEdges()) {
-    			edges.add(e.toViewJSON(s));
-    		}	
-    	}
-    	
-    
-    	json.put("statements", statementsJSON);
-    	json.put("edges", edges);
-    	
-    	return json.toJSONString();
-    }
+	public String toJSONString() {
+		ObjectMapper mapper = new ObjectMapper();
+    	String json = "";
+		try {
+			json = mapper.writeValueAsString(this.getRepresentation());
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+    	return json;
+	}
 }

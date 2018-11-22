@@ -1,18 +1,29 @@
 package fr.lirmm.graphik.graal.elder.core;
 
-import org.json.simple.JSONObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import fr.lirmm.graphik.graal.elder.labeling.Labels;
+import fr.lirmm.graphik.graal.elder.persistance.SGEdgeJSONRepresentation;
 
 public class SGEdge {
+	public static String ATTACK = "attack", SUPPORT = "support";
+	
 	private Statement source;
 	private Assumption target;
-	private boolean isAttack;
+	private String type;
 	
 	private String label;
 	
-	public SGEdge(Statement source, Assumption target, boolean isAttack) {
+	public SGEdge(Statement source, Assumption target, String type) {
 		this.source = source;
 		this.target = target;
-		this.isAttack = isAttack;
+		this.type = type;
+	}
+	
+	public SGEdge(Statement source, Assumption target, String type, String label) {
+		this(source, target, type);
+		this.setLabel(label);
 	}
 	
 	public Statement getSource() {
@@ -24,7 +35,7 @@ public class SGEdge {
 	}
 	
 	public boolean isAttack() {
-		return this.isAttack;
+		return this.type.equals(ATTACK);
 	}
 	
 	public String getLabel() {
@@ -41,7 +52,7 @@ public class SGEdge {
 	
 	
 	public String toString() {
-		if(this.isAttack) return this.source.toString() + " **Attack** " + this.target.toString();
+		if(isAttack()) return this.source.toString() + " **Attack** " + this.target.toString();
 				
 		return this.source.toString();
 	}
@@ -49,7 +60,7 @@ public class SGEdge {
 	public int hashCode() {
         final int prime = 31;
         int result = 1;
-        //result = prime * result + ((this.isAttack) ? 0 : 1);
+        result = prime * result + ((this.type == null) ? 0 : this.type.hashCode());
         result = prime * result + ((this.source == null) ? 0 : this.source.hashCode());
         result = prime * result + ((this.target == null) ? 0 : this.target.hashCode());
         
@@ -57,13 +68,8 @@ public class SGEdge {
     }
 	
 	public String getID(Statement target) {
-		final int prime = 31;
-        int result = 1;
-        //result = prime * result + ((this.isAttack) ? 0 : 1);
-        result = prime * result + ((this.source == null) ? 0 : this.source.hashCode());
-        result = prime * result + ((this.target == null) ? 0 : target.hashCode());
         // we append 'id' due to HTML no liking ids starting with '-' (if they are negative).
-        return "ID" + result;
+        return "ID" + this.hashCode();
 	}
 	
 	/**
@@ -93,34 +99,27 @@ public class SGEdge {
         return true;
     }
     
-    @SuppressWarnings("unchecked")
-    public JSONObject toJSON(Statement targetStatement) {
-    	JSONObject json = new JSONObject();
-    	json.put("id", this.getID(targetStatement));
-    	json.put("source", this.source.getID());
-    	// if it is attacking a rule application then we need to store the statement
-    	// TODO: explain why do we need that?
-    	String target = (this.targetIsRuleApplication()) ? targetStatement.getID() : this.target.toString();
-    	json.put("target", target);
-    	json.put("label", this.getLabel());
-    	
-    	json.put("type", this.isAttack);
-    	return json;
+    public SGEdgeJSONRepresentation getRepresentation(Statement targetStatement) {
+    	SGEdgeJSONRepresentation rep = new SGEdgeJSONRepresentation();
+    	rep.setId(this.getID(targetStatement));
+    	rep.setSource(this.source.getID());
+    	rep.setTarget(targetStatement.getID());
+    	rep.setTargettedAssumption(this.target.toString());
+    	rep.setType(this.type);
+    	rep.setLabel(this.getLabel());
+    	rep.setLabelString(Labels.toPrettyString(this.getLabel()));
+    	return rep;
     }
     
-    @SuppressWarnings("unchecked")
-    public JSONObject toViewJSON(Statement target) {
-    	JSONObject json = new JSONObject();
-    	json.put("id", this.getID(target));
-    	json.put("source", this.source.getID());
-    	json.put("target", target.getID());
-
-    	String label = (this.getLabel() != null) ? this.getLabel() : "";
-    	json.put("label", label);
-    	
-    	String type = (this.isAttack == true) ? "attack" : "support";
-    	json.put("type", type);
-    	
+  
+    public String toJSONString(Statement targetStatement) {
+    	ObjectMapper mapper = new ObjectMapper();
+    	String json = "";
+		try {
+			json = mapper.writeValueAsString(this.getRepresentation(targetStatement));
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
     	return json;
     }
 }

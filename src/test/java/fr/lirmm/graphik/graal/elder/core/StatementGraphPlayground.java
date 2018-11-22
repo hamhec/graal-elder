@@ -32,7 +32,7 @@ public class StatementGraphPlayground {
 	
 	@Test
 	public void shouldJSONTheShitOutOfIt() throws AtomSetException, IteratorException, ChaseException, HomomorphismException {	
-		System.out.println(sg.toJSON());
+		System.out.println(sg.toJSONString());
 		Assert.assertTrue(true);
 	}
 	
