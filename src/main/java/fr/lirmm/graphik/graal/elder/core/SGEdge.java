@@ -69,7 +69,14 @@ public class SGEdge {
 	
 	public String getID(Statement target) {
         // we append 'id' due to HTML no liking ids starting with '-' (if they are negative).
-        return "ID" + this.hashCode();
+		
+		final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.type == null) ? 0 : this.type.hashCode());
+        result = prime * result + ((this.source == null) ? 0 : this.source.hashCode());
+        result = prime * result + ((target == null) ? 0 : target.hashCode());
+        
+        return "ID" + result;
 	}
 	
 	/**

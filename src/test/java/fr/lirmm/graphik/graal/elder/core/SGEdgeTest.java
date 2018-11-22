@@ -3,14 +3,16 @@ package fr.lirmm.graphik.graal.elder.core;
 import java.util.HashSet;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
 import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
+import fr.lirmm.graphik.graal.elder.persistance.SGEdgeJSONRepresentation;
+import fr.lirmm.graphik.graal.elder.persistance.StatementGraphJSONRepresentation;
 import fr.lirmm.graphik.util.stream.IteratorException;
-import org.junit.Assert;
 
 public class SGEdgeTest {
 	@Test
@@ -31,6 +33,34 @@ public class SGEdgeTest {
 		}
 		
 		Assert.assertEquals(2, es.size());
+		
+	}
+	
+	@Test
+	public void shouldHaveDifferentIDifGoingToDifferentTargetStatement() throws AtomSetException, IteratorException, ChaseException, HomomorphismException {
+		DefeasibleKnowledgeBase kb = new DefeasibleKnowledgeBase();
+		kb.add("penguin(a) <= .");
+		kb.add("bird(X) <= penguin(X).");
+		kb.add("notFly(X) <= penguin(X).");
+		
+		StatementGraph sg = new StatementGraph(kb);
+		sg.build();
+		
+		StatementGraphJSONRepresentation rep = sg.getRepresentation();
+		
+		for(SGEdgeJSONRepresentation e: rep.getEdges()) {
+			int count = -1;
+			for(SGEdgeJSONRepresentation e2: rep.getEdges()) {
+				if(e.getId().equals(e2.getId())) {
+					count++;
+					if(count > 0) {
+						Assert.fail();
+						return;
+					}
+				}
+				
+			}
+		}
 		
 	}
 }
