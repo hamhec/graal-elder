@@ -9,6 +9,7 @@ import org.junit.Test;
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
 import fr.lirmm.graphik.graal.api.forward_chaining.ChaseException;
 import fr.lirmm.graphik.graal.api.homomorphism.HomomorphismException;
+import fr.lirmm.graphik.graal.api.io.ParseException;
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
 import fr.lirmm.graphik.graal.elder.persistance.SGEdgeJSONRepresentation;
 import fr.lirmm.graphik.graal.elder.persistance.StatementGraphJSONRepresentation;
@@ -61,6 +62,32 @@ public class SGEdgeTest {
 				
 			}
 		}
-		
 	}
+	
+	@Test
+	public void shouldGiveDifferentHashesIfTheConstantsChangePositions() throws AtomSetException, IteratorException, ChaseException, HomomorphismException {
+		DefeasibleKnowledgeBase kb = new DefeasibleKnowledgeBase();
+		kb.add("pref(t,d), pref(d,t).");
+		kb.add("eq(X,Y) <- pref(X,Y), pref(Y,X).");
+		
+		StatementGraph sg = new StatementGraph(kb);
+		sg.build();
+		
+		StatementGraphJSONRepresentation rep = sg.getRepresentation();
+		
+		for(SGEdgeJSONRepresentation e: rep.getEdges()) {
+			int count = -1;
+			for(SGEdgeJSONRepresentation e2: rep.getEdges()) {
+				if(e.getId().equals(e2.getId())) {
+					count++;
+					if(count > 0) {
+						Assert.fail();
+						return;
+					}
+				}
+				
+			}
+		}
+	}
+	
 }
