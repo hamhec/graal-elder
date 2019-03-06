@@ -164,7 +164,7 @@ public class StatementGraph {
 	/**
 	 * Returns the premise representing the atom, or creates it if necessary.
 	 * @param atom Atom
-	 * @param HashSet<String> authors
+	 * @param authors HashSet
 	 * @return Premise Premise of the atom
 	 */
 	public Premise getOrCreatePremiseOfAtom(String atom, HashSet<String> authors) {
