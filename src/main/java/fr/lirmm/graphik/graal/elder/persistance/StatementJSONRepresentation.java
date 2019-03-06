@@ -1,6 +1,7 @@
 package fr.lirmm.graphik.graal.elder.persistance;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 public class StatementJSONRepresentation implements Serializable {
@@ -13,7 +14,9 @@ public class StatementJSONRepresentation implements Serializable {
 	private List<PremiseJSONRepresentation> premises;
 	private String label;
 	private String labelString;
-
+	
+	private Collection<String> authors;
+	
 	public StatementJSONRepresentation() {}
 	
 	
@@ -72,6 +75,16 @@ public class StatementJSONRepresentation implements Serializable {
 
 	public void setLabelString(String labelString) {
 		this.labelString = labelString;
+	}
+
+
+	public Collection<String> getAuthors() {
+		return authors;
+	}
+
+
+	public void setAuthors(Collection<String> authors) {
+		this.authors = authors;
 	}
 	
 	

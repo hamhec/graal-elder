@@ -8,9 +8,11 @@ import fr.lirmm.graphik.graal.api.core.Atom;
 import fr.lirmm.graphik.graal.api.core.AtomSet;
 import fr.lirmm.graphik.graal.api.core.Rule;
 import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
+import fr.lirmm.graphik.graal.defeasible.core.atoms.FlexibleAtom;
 import fr.lirmm.graphik.graal.defeasible.core.rules.DefeasibleRule;
 import fr.lirmm.graphik.graal.defeasible.core.rules.DefeaterRule;
 import fr.lirmm.graphik.graal.defeasible.core.rules.PreferenceRule;
+import fr.lirmm.graphik.graal.defeasible.core.rules.StrictRule;
 import fr.lirmm.graphik.graal.elder.labeling.Labels;
 import fr.lirmm.graphik.graal.elder.persistance.RuleApplicationJSONRepresentation;
 import fr.lirmm.graphik.util.stream.CloseableIterator;
@@ -38,15 +40,19 @@ public class RuleApplication extends AbstractAssumption {
 		if(rule instanceof DefeasibleRule) {
 			this.type = DEFEASIBLE;
 			implication = "=>";
+			this.setAuthors(((DefeasibleRule)rule).getAuthors());
 		} else if (rule instanceof DefeaterRule) {
 			this.type = DEFEATER;
 			implication = "~>";
+			this.setAuthors(((DefeaterRule)rule).getAuthors());
 		} else if (rule instanceof PreferenceRule) {
 			this.type = PREFERENCE_RULE;
 			implication = "->";
+			this.setAuthors(((PreferenceRule)rule).getAuthors());
 		} else {
 			this.type = STRICT;
 			implication = "->";
+			this.setAuthors(((StrictRule)rule).getAuthors());
 		}
 		if(null != instantiatedBody) {
 			// sort the body
@@ -64,12 +70,13 @@ public class RuleApplication extends AbstractAssumption {
 		this.title += generatedAtom;
 	}
 	
-	public RuleApplication(Atom fact) {
+	public RuleApplication(FlexibleAtom fact) {
 		this.generatedAtom = fact.toString();
 		this.title = LogicalObjectsFactory.instance().getTOPAtom().toString() + " -> " + this.generatedAtom;
 		this.type = STRICT;
 		this.ruleLabel = "";
 		this.rule = this.title;
+		this.setAuthors(fact.getAuthors());
 	}
 	
 	public RuleApplication(String ruleLabel, String rule, String generatedAtom, String title, String type, String label) {

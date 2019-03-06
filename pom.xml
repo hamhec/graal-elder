@@ -13,7 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <graal.defeasible.core.version>0.0.4</graal.defeasible.core.version>
+    <graal.defeasible.core.version>0.0.6</graal.defeasible.core.version>
     <jdk.version>1.8</jdk.version>
     <jackson.version>2.9.7</jackson.version>
   </properties>

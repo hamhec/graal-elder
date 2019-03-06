@@ -1,16 +1,18 @@
 package fr.lirmm.graphik.graal.elder.core;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import fr.lirmm.graphik.graal.defeasible.core.Authorable;
 import fr.lirmm.graphik.graal.defeasible.core.LogicalObjectsFactory;
 import fr.lirmm.graphik.graal.elder.labeling.Labels;
 import fr.lirmm.graphik.graal.elder.persistance.PremiseJSONRepresentation;
 import fr.lirmm.graphik.graal.elder.persistance.StatementJSONRepresentation;
 
-public class Statement {
+public class Statement implements Authorable {
 	
 	private RuleApplication ruleApplication;
 	private List<Premise> premises;
@@ -173,6 +175,9 @@ public class Statement {
     	rep.setLabel(this.getLabel());
     	rep.setLabelString(Labels.toPrettyString(this.getLabel()));
     	
+    	// Add authors
+    	rep.setAuthors(this.getAuthors());
+    	
     	// Display information
     	rep.setId(this.getID());
     	rep.setTitle(this.toString());
@@ -189,4 +194,22 @@ public class Statement {
     	
     	return rep;
     }
+    
+    
+    public HashSet<String> getAuthors() {
+    	HashSet<String> authors = new HashSet<String>();
+    	if(null != this.ruleApplication && null != this.ruleApplication.getAuthors()) {
+    		authors.addAll(this.ruleApplication.getAuthors());
+    	}
+    	if(null != this.premises) {
+    		for(Premise p: this.premises) {
+    			if(null != p && null != p.getAuthors()) {
+    				authors.addAll(p.getAuthors());
+    			}
+    		}
+    	}
+    	return authors;
+    }
+    
+    public void setAuthors(HashSet<String> authors) {}
 }

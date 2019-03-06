@@ -9,9 +9,16 @@ public abstract class AbstractAssumption implements Assumption {
 	private HashSet<SGEdge> attackEdges;
 	private String label;
 	
+	private HashSet<String> authors;
+	
+	
 	public AbstractAssumption() {
 		this.supportEdges = new HashSet<SGEdge>();
 		this.attackEdges = new HashSet<SGEdge>();
+	}
+	
+	public AbstractAssumption(HashSet<String> authors) {
+		this.authors = authors;
 	}
 	
 	public String getLabel() {
@@ -51,5 +58,13 @@ public abstract class AbstractAssumption implements Assumption {
 		edges.addAll(this.getAttackEdges());
 		edges.addAll(this.getSupportEdges());
 		return edges;
+	}
+	
+	public HashSet<String> getAuthors() {
+		return this.authors;
+	}
+	
+	public void setAuthors(HashSet<String> authors) {
+		this.authors = authors;
 	}
 }

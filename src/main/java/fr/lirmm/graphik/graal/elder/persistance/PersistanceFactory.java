@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBase;
+import fr.lirmm.graphik.graal.defeasible.core.DefeasibleKnowledgeBaseCollection;
 import fr.lirmm.graphik.graal.defeasible.core.preferences.PreferenceSet;
 import fr.lirmm.graphik.graal.defeasible.core.preferences.RulePreference;
 import fr.lirmm.graphik.graal.elder.core.Assumption;
@@ -50,7 +51,7 @@ public class PersistanceFactory {
 	}
 	
 	public Premise inflatePremise(StatementGraph sg, PremiseJSONRepresentation rep) {
-		Premise prem = sg.getOrCreatePremiseOfAtom(rep.getAtom());
+		Premise prem = sg.getOrCreatePremiseOfAtom(rep.getAtom(), null);
 		prem.setLabel(rep.getLabel());
 		return prem;
 	}
@@ -109,10 +110,11 @@ public class PersistanceFactory {
 		return prefSet;
 	}
 	
-	public void inflateRulePreferences(DefeasibleKnowledgeBase kb, List<String> prefs) {
+	public void inflateRulePreferences(DefeasibleKnowledgeBaseCollection kbs, List<String> prefs) {
 		for(String prefString: prefs) {
 			RulePreference pref = inflateRulePreference(prefString);
-			kb.addRulePreference(pref);
+			// TODO this is a very risky patch!!!!!!!!!!!! the deflation process should somehow remember different kbs with different authors
+			kbs.iterator().next().addRulePreference(pref);
 		}
 	}
 	
@@ -126,7 +128,7 @@ public class PersistanceFactory {
 		// Inflates Edges
 		inflateEdges(sg,rep.getEdges());
 		// Inflate RulePreferences
-		inflateRulePreferences(sg.getKB(), rep.getRulePreferences());
+		inflateRulePreferences(sg.getKBs(), rep.getRulePreferences());
 
 		return sg;
 	}

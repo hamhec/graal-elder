@@ -1,5 +1,7 @@
 package fr.lirmm.graphik.graal.elder.reasoning;
 
+import java.util.HashSet;
+
 import fr.lirmm.graphik.graal.api.core.Atom;
 import fr.lirmm.graphik.graal.api.core.AtomSet;
 import fr.lirmm.graphik.graal.api.core.AtomSetException;
@@ -41,16 +43,22 @@ public class SGRuleApplicationHandler implements RuleApplicationHandler{
 			Substitution substitution, AtomSet data, CloseableIterator<Atom> atomsToAdd) {
 		
 		// atomsToAdd is not reliable as atoms reference could be deleted if they are considered redundant
+		// data does not represent the used atoms for this application but the whole knowledge that has been given as input.
 		// so we create our own image of those facts
 		CloseableIteratorWithoutException<Atom> itNewFacts = substitution.createImageOf(rule.getHead()).iterator();
-		CloseableIteratorWithoutException<Atom> itBody = substitution.createImageOf(rule.getBody()).iterator();
+		CloseableIterator<Atom> itBody = substitution.createImageOf(rule.getBody()).iterator();
 		AtomSet body = new LinkedListAtomSet();
-		while(itBody.hasNext()) {
-			try {
-				body.add(new FlexibleAtom(itBody.next()));
-			} catch (AtomSetException e) {
-				e.printStackTrace();
+		
+		try {
+			while(itBody.hasNext()) {
+				try {
+					body.add(new FlexibleAtom(itBody.next()));
+				} catch (AtomSetException e) {
+					e.printStackTrace();
+				}
 			}
+		} catch (IteratorException e1) {
+			e1.printStackTrace();
 		}
 		// Add a rule application (statement) for each generated Atom
 		while(itNewFacts.hasNext()) {
@@ -62,10 +70,8 @@ public class SGRuleApplicationHandler implements RuleApplicationHandler{
 				} else {
 					newAtom = new FlexibleAtom(itNewFacts.next());
 				}
-				sg.addStatementForRuleApplication(body, newAtom, rule);
+				sg.getOrCreateStatement(body, newAtom, rule);
 			} catch (IteratorException e) {
-				e.printStackTrace();
-			} catch (AtomSetException e) {
 				e.printStackTrace();
 			} 
 		}
