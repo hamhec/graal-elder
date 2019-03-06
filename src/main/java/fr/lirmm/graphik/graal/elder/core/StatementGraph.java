@@ -65,7 +65,7 @@ public class StatementGraph {
 	// ------------------------------------------------------------------------	
 	/**
 	 * Creates an SG given a KB and a labelingFunction
-	 * @param kb The defeasible Knowledge Base
+	 * @param kbs The collection of defeasible Knowledge Bases
 	 * @param labelingFunction LabelingFunction
 	 */
 	public StatementGraph(DefeasibleKnowledgeBaseCollection kbs, LabelingFunction labelingFunction) {
@@ -75,7 +75,7 @@ public class StatementGraph {
 	}
 	/**
 	 * Creates an EDG given a KB
-	 * @param kb The defeasible Knowledge Base
+	 * @param kbs The collection of defeasible Knowledge Bases
 	 */
 	public StatementGraph(DefeasibleKnowledgeBaseCollection kbs) {
 		this(kbs, new PDLwithoutTD(kbs.getRulePreferences()));
@@ -164,6 +164,7 @@ public class StatementGraph {
 	/**
 	 * Returns the premise representing the atom, or creates it if necessary.
 	 * @param atom Atom
+	 * @param HashSet<String> authors
 	 * @return Premise Premise of the atom
 	 */
 	public Premise getOrCreatePremiseOfAtom(String atom, HashSet<String> authors) {
